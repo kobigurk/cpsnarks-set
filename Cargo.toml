@@ -1,0 +1,9 @@
+[package]
+name = "cpsnarks-set"
+version = "0.1.0"
+authors = ["Kobi Gurkan <kobigurk@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+accumulator = { git = "https://github.com/kobigurk/accumulator.git", tag = "v0.2.1" }
+quick-error = "1.2.3"
