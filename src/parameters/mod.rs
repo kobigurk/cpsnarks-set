@@ -22,15 +22,27 @@ impl Parameters {
             hash_to_prime_bits: 2*security_level - 2,
         };
 
+        parameters.is_valid()?;
         Ok(parameters)
     }
 
-    pub fn valid(&self) -> Result<(), ParametersError> {
+    pub fn is_valid(&self) -> Result<(), ParametersError> {
         let d = 1 + (self.root_security_zk + self.root_security_soundness + 2)/self.hash_to_prime_bits;
         if d*self.hash_to_prime_bits + 2 <= self.field_size_bits {
             Ok(())
         } else {
             Err(ParametersError::InvalidParameters)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Parameters;
+
+    #[test]
+    fn test_valid_for_128() {
+        let params = Parameters::from_security_level(128).unwrap();
+        params.is_valid().unwrap();
     }
 }
