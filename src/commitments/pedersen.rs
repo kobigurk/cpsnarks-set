@@ -1,14 +1,10 @@
-use algebra_core::{
-    fields::PrimeField,
-    ProjectiveCurve,
-    biginteger::BigInteger,
-};
+use algebra_core::ProjectiveCurve;
 use rand::Rng;
 use crate::commitments::{CommitmentError, Commitment};
 use rug::Integer;
-use rug::integer::Order;
 use crate::utils::integer_to_bigint;
 
+#[derive(Clone)]
 pub struct PedersenCommitment<P: ProjectiveCurve> {
     g: P,
     h: P,
@@ -57,7 +53,6 @@ impl<P: ProjectiveCurve> Commitment for PedersenCommitment<P> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use rug::integer::Order;
     use super::PedersenCommitment;
     use algebra::jubjub::JubJubProjective;
     use rand_xorshift::XorShiftRng;

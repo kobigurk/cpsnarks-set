@@ -5,6 +5,7 @@ use crate::{
     utils::ConvertibleUnknownOrderGroup,
 };
 
+#[derive(Clone)]
 pub struct IntegerCommitment<G: ConvertibleUnknownOrderGroup> {
     g: G::Elem,
     h: G::Elem,
@@ -13,9 +14,12 @@ pub struct IntegerCommitment<G: ConvertibleUnknownOrderGroup> {
 impl<G: ConvertibleUnknownOrderGroup> IntegerCommitment<G> {
     pub fn setup<R: MutRandState>(rng: &mut R) -> IntegerCommitment<G> {
         let upper_bound = G::order_upper_bound();
+        //TODO: should do N/2? how to generalize?
+        let g = G::elem(upper_bound.clone().random_below(rng));
+        let h = G::exp(&g, &upper_bound.random_below(rng));
         IntegerCommitment {
-            g: G::elem(upper_bound.clone().random_below(rng)),
-            h: G::elem(upper_bound.random_below(rng)),
+            g,
+            h,
         }
     }
 
@@ -47,7 +51,6 @@ impl<G: ConvertibleUnknownOrderGroup> Commitment for IntegerCommitment<G> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use rug::integer::Order;
     use rug::rand::RandState;
     use super::IntegerCommitment;
     use crate::commitments::Commitment;

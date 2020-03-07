@@ -3,8 +3,8 @@ use crate::commitments::{
 };
 use crate::parameters::Parameters;
 use crate::transcript::TranscriptProtocol;
-use crate::utils::{bigint_to_integer, integer_mod_q, integer_to_bigint, integer_to_bytes, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q};
-use algebra_core::{PrimeField, ProjectiveCurve, UniformRand, FpParameters};
+use crate::utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q};
+use algebra_core::{PrimeField, ProjectiveCurve, UniformRand};
 use merlin::Transcript;
 use rand::Rng;
 use rug::rand::MutRandState;
@@ -36,8 +36,8 @@ quick_error! {
     }
 }
 
-
-pub struct CRS<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+#[derive(Clone)]
+pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
     // G contains the information about Z^*_N
     pub parameters: Parameters,
     pub integer_commitment_parameters: IntegerCommitment<G>, // G, H
@@ -72,21 +72,15 @@ pub struct Proof<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
 }
 
 pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
-    pub crs: CRS<G, P>,
+    pub crs: CRSModEq<G, P>,
 }
 
 impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
-    pub fn setup<R1: MutRandState, R2: Rng>(
-        parameters: &Parameters,
-        rng1: &mut R1,
-        rng2: &mut R2,
+    pub fn from_crs(
+        crs: &CRSModEq<G, P>
     ) -> Protocol<G, P> {
         Protocol {
-            crs: CRS::<G, P> {
-                parameters: parameters.clone(),
-                integer_commitment_parameters: IntegerCommitment::<G>::setup(rng1),
-                pedersen_commitment_parameters: PedersenCommitment::<P>::setup(rng2),
-            }
+            crs: crs.clone(),
         }
     }
 
@@ -95,13 +89,13 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         transcript: &'t mut Transcript,
         rng1: &mut R1,
         rng2: &mut R2,
-        statement: &Statement<G, P>,
+        _: &Statement<G, P>,
         witness: &Witness,
     ) -> Result<Proof<G, P>, ModEqProofError>
     where
         Transcript: TranscriptProtocol<G, P>,
     {
-        let mut r_e_range = Integer::from(Integer::u_pow_u(
+        let r_e_range = Integer::from(Integer::u_pow_u(
             2,
             (self.crs.parameters.security_zk
                 + self.crs.parameters.security_soundness
@@ -182,7 +176,6 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use rug::integer::Order;
     use super::PedersenCommitment;
     use algebra::jubjub::JubJubProjective;
     use rand_xorshift::XorShiftRng;
@@ -194,6 +187,7 @@ mod test {
     use super::{Protocol, Statement, Witness};
     use crate::parameters::Parameters;
     use merlin::Transcript;
+    use crate::protocols::modeq::CRSModEq;
 
     #[test]
     fn test_proof() {
@@ -202,7 +196,14 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let protocol = Protocol::<Rsa2048, JubJubProjective>::setup(&params, &mut rng1, &mut rng2);
+        let integer_commitment_parameters = IntegerCommitment::<Rsa2048>::setup(&mut rng1);
+        let pedersen_commitment_parameters = PedersenCommitment::<JubJubProjective>::setup(&mut rng2);
+        let crs = CRSModEq {
+            parameters: params.clone(),
+            integer_commitment_parameters: integer_commitment_parameters.clone(),
+            pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
+        };
+        let protocol = Protocol::<Rsa2048, JubJubProjective>::from_crs(&crs);
 
         let value1 = Integer::from(2);
         let randomness1 = Integer::from(5);
