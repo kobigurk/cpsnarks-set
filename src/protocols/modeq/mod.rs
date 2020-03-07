@@ -52,6 +52,7 @@ pub struct Statement<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
 pub struct Witness {
     pub e: Integer,
     pub r: Integer,
+    pub r_q: Integer,
 }
 
 pub struct Message1<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
@@ -135,7 +136,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         let message1 = Message1::<G, P> { alpha1, alpha2 };
 
         let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
-        let r_q = P::ScalarField::from_repr(integer_to_bigint_mod_q::<P>(&witness.r.clone())?);
+        let r_q = P::ScalarField::from_repr(integer_to_bigint_mod_q::<P>(&witness.r_q.clone())?);
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
         let c_big = integer_to_bigint_mod_q::<P>(&c)?;
@@ -205,8 +206,9 @@ mod test {
 
         let value1 = Integer::from(2);
         let randomness1 = Integer::from(5);
+        let randomness2 = Integer::from(9);
         let commitment1 = protocol.crs.integer_commitment_parameters.commit(&value1, &randomness1).unwrap();
-        let commitment2 = protocol.crs.pedersen_commitment_parameters.commit(&value1, &randomness1).unwrap();
+        let commitment2 = protocol.crs.pedersen_commitment_parameters.commit(&value1, &randomness2).unwrap();
 
         let mut proof_transcript = Transcript::new(b"modeq");
         let statement = Statement {
@@ -216,6 +218,7 @@ mod test {
         let proof = protocol.prove(&mut proof_transcript, &mut rng1, &mut rng2, &statement, &Witness {
             e: value1,
             r: randomness1,
+            r_q: randomness2,
         }).unwrap();
 
         let mut verification_transcript = Transcript::new(b"modeq");
