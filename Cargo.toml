@@ -5,5 +5,13 @@ authors = ["Kobi Gurkan <kobigurk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-accumulator = { git = "https://github.com/kobigurk/accumulator.git", tag = "v0.2.1" }
+accumulator = { path = "../accumulator" }
 quick-error = "1.2.3"
+rug = "1.7.0"
+algebra-core = { path = "../zexe/algebra-core" }
+algebra = { path = "../zexe/algebra", features = ["jubjub"]}
+merlin = "2.0.0"
+rand = { version = "0.7", default-features = false }
+
+[dev-dependencies]
+rand_xorshift = "0.2"
