@@ -2,12 +2,39 @@ use algebra_core::ProjectiveCurve;
 use crate::utils::ConvertibleUnknownOrderGroup;
 use crate::parameters::Parameters;
 use crate::commitments::{
-    integer::IntegerCommitment, pedersen::PedersenCommitment,
+    integer::IntegerCommitment, pedersen::PedersenCommitment, CommitmentError,
 };
 use crate::protocols::modeq::CRSModEq;
 use crate::protocols::root::CRSRoot;
 use rug::rand::MutRandState;
 use rand::Rng;
+use rug::Integer;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum ProofError {
+        CouldNotCreateProof {}
+        CommitmentError(err: CommitmentError) {
+            from()
+        }
+        IntegerError(err: Integer) {
+            from()
+        }
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum VerificationError {
+        VerificationFailed {}
+        CommitmentError(err: CommitmentError) {
+            from()
+        }
+        IntegerError(err: Integer) {
+            from()
+        }
+    }
+}
 
 pub struct CRS<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
     // G contains the information about Z^*_N

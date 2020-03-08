@@ -1,40 +1,15 @@
 use crate::commitments::{
-    integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment, CommitmentError,
+    integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment,
 };
 use crate::parameters::Parameters;
-use crate::transcript::TranscriptProtocol;
+use crate::transcript::{TranscriptProtocolModEq, TranscriptProtocolChallenge, TranscriptProtocolCurve, TranscriptProtocolInteger};
 use crate::utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q};
 use algebra_core::{PrimeField, ProjectiveCurve, UniformRand};
 use merlin::Transcript;
 use rand::Rng;
 use rug::rand::MutRandState;
 use rug::Integer;
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum ModEqProofError {
-        CouldNotCreateProof {}
-        CommitmentError(err: CommitmentError) {
-            from()
-        }
-        IntegerError(err: Integer) {
-            from()
-        }
-    }
-}
-
-quick_error! {
-    #[derive(Debug)]
-    pub enum ModEqVerificationError {
-        VerificationFailed {}
-        CommitmentError(err: CommitmentError) {
-            from()
-        }
-        IntegerError(err: Integer) {
-            from()
-        }
-    }
-}
+use crate::protocols::membership_prime::{ProofError, VerificationError};
 
 #[derive(Clone)]
 pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
@@ -91,9 +66,9 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         rng2: &mut R2,
         _: &Statement<G, P>,
         witness: &Witness,
-    ) -> Result<Proof<G, P>, ModEqProofError>
+    ) -> Result<Proof<G, P>, ProofError>
     where
-        Transcript: TranscriptProtocol<G, P>,
+        Transcript: TranscriptProtocolModEq<G, P>,
     {
         let r_e_range = Integer::from(Integer::u_pow_u(
             2,
@@ -146,29 +121,29 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         transcript: &'t mut Transcript,
         statement: &Statement<G, P>,
         proof: &Proof<G, P>,
-    ) -> Result<(), ModEqVerificationError>
+    ) -> Result<(), VerificationError>
     where
-        Transcript: TranscriptProtocol<G, P>,
+        Transcript: TranscriptProtocolModEq<G, P>,
     {
         transcript.append_integer_point(b"alpha1", &proof.message1.alpha1);
         transcript.append_curve_point(b"alpha2", &proof.message1.alpha2);
         let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
+
+        let commitment2 = self.crs.integer_commitment_parameters.commit(&proof.message2.s_e, &proof.message2.s_r)?;
+        let commitment2_extra = G::exp(&statement.c_e, &c);
+        let expected_alpha1 = G::op(&commitment2, &commitment2_extra);
 
         let s_e_mod_q = integer_mod_q::<P>(&proof.message2.s_e)?;
         let s_r_q_int = bigint_to_integer::<P>(&proof.message2.s_r_q.into_repr());
         let commitment1 = self.crs.pedersen_commitment_parameters.commit(&s_e_mod_q, &s_r_q_int)?;
         let c_big = integer_to_bigint_mod_q::<P>(&c)?;
         let commitment1_extra = statement.c_e_q.mul(P::ScalarField::from_repr(c_big));
-        let first = commitment1 + &commitment1_extra;
+        let expected_alpha2 = commitment1 + &commitment1_extra;
 
-        let commitment2 = self.crs.integer_commitment_parameters.commit(&proof.message2.s_e, &proof.message2.s_r)?;
-        let commitment2_extra = G::exp(&statement.c_e, &c);
-        let second = G::op(&commitment2, &commitment2_extra);
-
-        if second == proof.message1.alpha1 && first == proof.message1.alpha2 {
+        if expected_alpha1 == proof.message1.alpha1 && expected_alpha2 == proof.message1.alpha2 {
             Ok(())
         } else {
-            Err(ModEqVerificationError::VerificationFailed)
+            Err(VerificationError::VerificationFailed)
         }
     }
 }
