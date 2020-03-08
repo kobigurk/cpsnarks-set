@@ -176,18 +176,15 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use super::PedersenCommitment;
     use algebra::jubjub::JubJubProjective;
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
     use crate::commitments::Commitment;
     use rug::rand::RandState;
-    use super::IntegerCommitment;
     use accumulator::group::Rsa2048;
     use super::{Protocol, Statement, Witness};
     use crate::parameters::Parameters;
     use merlin::Transcript;
-    use crate::protocols::modeq::CRSModEq;
 
     #[test]
     fn test_proof() {
@@ -196,13 +193,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let integer_commitment_parameters = IntegerCommitment::<Rsa2048>::setup(&mut rng1);
-        let pedersen_commitment_parameters = PedersenCommitment::<JubJubProjective>::setup(&mut rng2);
-        let crs = CRSModEq {
-            parameters: params.clone(),
-            integer_commitment_parameters: integer_commitment_parameters.clone(),
-            pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
-        };
+        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, JubJubProjective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
         let protocol = Protocol::<Rsa2048, JubJubProjective>::from_crs(&crs);
 
         let value1 = Integer::from(2);
