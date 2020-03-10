@@ -140,6 +140,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         let commitment1_extra = statement.c_e_q.mul(P::ScalarField::from_repr(c_big));
         let expected_alpha2 = commitment1 + &commitment1_extra;
 
+
         if expected_alpha1 == proof.message1.alpha1 && expected_alpha2 == proof.message1.alpha2 {
             Ok(())
         } else {

@@ -208,10 +208,22 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
             &integer_commitment_alpha4.commit(&proof.message3.s_delta, &proof.message3.s_beta)?,
         );
 
+        let s_e_expected_right = Integer::from(Integer::u_pow_u(
+            2,
+            (self.crs.parameters.security_zk
+                + self.crs.parameters.security_soundness
+                + self.crs.parameters.hash_to_prime_bits + 1) as u32,
+        ));
+
+        let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
+        let is_s_e_in_range = proof.message3.s_e >= s_e_expected_left && proof.message3.s_e <= s_e_expected_right;
+
+
         if expected_alpha1 == proof.message2.alpha1 &&
             expected_alpha2 == proof.message2.alpha2 &&
             expected_alpha3 == proof.message2.alpha3 &&
-            expected_alpha4 == proof.message2.alpha4 {
+            expected_alpha4 == proof.message2.alpha4 &&
+            is_s_e_in_range {
             Ok(())
         } else {
             Err(VerificationError::VerificationFailed)
