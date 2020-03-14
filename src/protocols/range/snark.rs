@@ -1,5 +1,5 @@
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use algebra_core::{PrimeField, ProjectiveCurve, PairingEngine, UniformRand};
+use algebra_core::{PrimeField, PairingEngine, UniformRand};
 use r1cs_std::{
     Assignment,
     boolean::Boolean,
@@ -15,8 +15,8 @@ use crate::protocols::{
 use rand::Rng;
 use merlin::Transcript;
 use crate::transcript::TranscriptProtocolRange;
-use std::marker::PhantomData;
-use crate::utils::{integer_to_bigint, integer_to_bigint_mod_q};
+
+use crate::utils::{integer_to_bigint_mod_q};
 
 pub struct RangeProofCircuit<E: PairingEngine> {
     required_bit_size: u16,
@@ -91,7 +91,7 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
     fn verify<'t>(
         &self,
         _: &'t mut Transcript,
-        statement: &Statement<E::G1Projective>,
+        _statement: &Statement<E::G1Projective>,
         proof: &Self::Proof,
     ) -> Result<(), VerificationError>
         where
@@ -108,13 +108,13 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
 
 #[cfg(test)]
 mod test {
-    use algebra::bls12_381::g1::G1Projective;
-    use ccgro16::{generate_parameters, create_random_proof};
-    use super::RangeProofCircuit;
-    use rand::{self, Rng};
+    
+    
+    
+    use rand::{self};
 
     #[test]
     fn test_satisfied() {
-        let rng = &mut rand::thread_rng();
+        let _rng = &mut rand::thread_rng();
     }
 }
