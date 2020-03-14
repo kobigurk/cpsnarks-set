@@ -54,7 +54,7 @@ impl<P: ProjectiveCurve> Commitment for PedersenCommitment<P> {
 mod test {
     use rug::Integer;
     use super::PedersenCommitment;
-    use algebra::jubjub::JubJubProjective;
+    use algebra::bls12_381::G1Projective;
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
     use crate::commitments::Commitment;
@@ -65,7 +65,7 @@ mod test {
 
         let value = Integer::from(2);
         let randomness = Integer::from(5);
-        let pedersen = PedersenCommitment::<JubJubProjective>::setup(&mut rng);
+        let pedersen = PedersenCommitment::<G1Projective>::setup(&mut rng);
         let commitment = pedersen.commit(&value, &randomness).unwrap();
         pedersen.open(&commitment, &value, &randomness).unwrap();
         let wrong_value = Integer::from(5);

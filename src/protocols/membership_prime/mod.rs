@@ -9,6 +9,17 @@ use crate::protocols::root::CRSRoot;
 use rug::rand::MutRandState;
 use rand::Rng;
 use rug::Integer;
+use r1cs_core::SynthesisError;
+
+quick_error! {
+    #[derive(Debug)]
+    pub enum SetupError {
+        CouldNotPerformSetup {}
+        SNARKError(err: SynthesisError) {
+            from()
+        }
+    }
+}
 
 quick_error! {
     #[derive(Debug)]
@@ -18,6 +29,9 @@ quick_error! {
             from()
         }
         IntegerError(err: Integer) {
+            from()
+        }
+        SNARKError(err: SynthesisError) {
             from()
         }
     }
@@ -31,6 +45,9 @@ quick_error! {
             from()
         }
         IntegerError(err: Integer) {
+            from()
+        }
+        SNARKError(err: SynthesisError) {
             from()
         }
     }

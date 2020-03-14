@@ -234,7 +234,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use algebra::jubjub::JubJubProjective;
+    use algebra::bls12_381::G1Projective;
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
     use crate::commitments::Commitment;
@@ -259,7 +259,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, JubJubProjective>::setup(&params, &mut rng1, &mut rng2).crs.crs_root;
+        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);
 
         let value = Integer::from(LARGE_PRIMES[0]);

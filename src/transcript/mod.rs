@@ -9,7 +9,7 @@ use crate::utils::{integer_to_bytes, ConvertibleUnknownOrderGroup, bigint_to_byt
 use rug::integer::Order;
 
 pub trait TranscriptProtocolMembershipPrime<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve>:
-    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> {
+    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolRange<P> {
 
 }
 
@@ -21,6 +21,11 @@ pub trait TranscriptProtocolRoot<G: ConvertibleUnknownOrderGroup>:
 pub trait TranscriptProtocolModEq<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve>:
     TranscriptProtocolInteger<G> + TranscriptProtocolCurve<P> + TranscriptProtocolChallenge {
     fn modeq_domain_sep(&mut self);
+}
+
+pub trait TranscriptProtocolRange<P: ProjectiveCurve>:
+    TranscriptProtocolCurve<P> + TranscriptProtocolChallenge {
+    fn range_domain_sep(&mut self);
 }
 
 pub trait TranscriptProtocolChallenge {
@@ -37,15 +42,21 @@ pub trait TranscriptProtocolCurve<P: ProjectiveCurve> {
     fn append_curve_point(&mut self, label: &'static [u8], point: &P);
 }
 
+impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolRoot<G> for Transcript {
+    fn root_domain_sep(&mut self) {
+        self.append_message(b"dom-sep", b"root");
+    }
+}
+
 impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> TranscriptProtocolModEq<G, P> for Transcript {
     fn modeq_domain_sep(&mut self) {
         self.append_message(b"dom-sep", b"modeq");
     }
 }
 
-impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolRoot<G> for Transcript {
-    fn root_domain_sep(&mut self) {
-        self.append_message(b"dom-sep", b"root");
+impl<P: ProjectiveCurve> TranscriptProtocolRange<P> for Transcript {
+    fn range_domain_sep(&mut self) {
+        self.append_message(b"range", b"modeq");
     }
 }
 

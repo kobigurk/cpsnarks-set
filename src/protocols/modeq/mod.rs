@@ -152,7 +152,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use algebra::jubjub::JubJubProjective;
+    use algebra::bls12_381::G1Projective;
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
     use crate::commitments::Commitment;
@@ -169,8 +169,8 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, JubJubProjective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
-        let protocol = Protocol::<Rsa2048, JubJubProjective>::from_crs(&crs);
+        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
+        let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
 
         let value1 = Integer::from(2);
         let randomness1 = Integer::from(5);

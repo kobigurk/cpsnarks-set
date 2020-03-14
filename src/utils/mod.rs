@@ -85,13 +85,13 @@ pub fn bigint_to_integer<P: ProjectiveCurve>(num: &<P::ScalarField as PrimeField
 mod test {
     use crate::utils::{integer_to_bigint, bigint_to_integer};
     use rug::Integer;
-    use algebra::jubjub::JubJubProjective;
+    use algebra::bls12_381::G1Projective;
 
     #[test]
     fn test_back_and_forth() {
         let int = Integer::from(2493823);
-        let big = integer_to_bigint::<JubJubProjective>(&int);
-        let int2 = bigint_to_integer::<JubJubProjective>(&big);
+        let big = integer_to_bigint::<G1Projective>(&int);
+        let int2 = bigint_to_integer::<G1Projective>(&big);
         assert_eq!(int, int2);
     }
 

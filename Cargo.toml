@@ -9,9 +9,12 @@ accumulator = { path = "../accumulator" }
 quick-error = "1.2.3"
 rug = "1.7.0"
 algebra-core = { path = "../zexe/algebra-core" }
-algebra = { path = "../zexe/algebra", features = ["jubjub"]}
+algebra = { path = "../zexe/algebra", features = ["bls12_381"]}
 merlin = "2.0.0"
-rand = { version = "0.7", default-features = false }
+rand = { version = "0.7" }
+r1cs-core = { path = "../zexe/r1cs-core" }
+r1cs-std = { path = "../zexe/r1cs-std" }
+ccgro16 = { path = "../zexe/ccgro16" }
 
 [dev-dependencies]
 rand_xorshift = "0.2"
