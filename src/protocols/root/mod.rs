@@ -1,14 +1,15 @@
-use crate::commitments::{
-    Commitment,
-    integer::IntegerCommitment,
+use crate::{
+    parameters::Parameters,
+    utils::{ConvertibleUnknownOrderGroup, random_symmetric_range},
+    commitments::{
+        Commitment,
+        integer::IntegerCommitment,
+    },
+    protocols::membership_prime::{ProofError, VerificationError},
+    channels::root::{RootProverChannel, RootVerifierChannel},
 };
-use crate::parameters::Parameters;
-use crate::utils::{ConvertibleUnknownOrderGroup, random_symmetric_range};
 use rug::Integer;
 use rug::rand::MutRandState;
-use merlin::Transcript;
-use crate::transcript::{TranscriptProtocolRoot, TranscriptProtocolInteger, TranscriptProtocolChallenge};
-use crate::protocols::membership_prime::{ProofError, VerificationError};
 
 #[derive(Clone)]
 pub struct CRSRoot<G: ConvertibleUnknownOrderGroup> {
@@ -27,11 +28,13 @@ pub struct Witness<G: ConvertibleUnknownOrderGroup> {
     pub w: G::Elem,
 }
 
+#[derive(Clone)]
 pub struct Message1<G: ConvertibleUnknownOrderGroup> {
     pub c_w: G::Elem,
     pub c_r: <IntegerCommitment<G> as Commitment>::Instance,
 }
 
+#[derive(Clone)]
 pub struct Message2<G: ConvertibleUnknownOrderGroup> {
     pub alpha1: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha2: <IntegerCommitment<G> as Commitment>::Instance,
@@ -39,6 +42,7 @@ pub struct Message2<G: ConvertibleUnknownOrderGroup> {
     pub alpha4: G::Elem,
 }
 
+#[derive(Clone)]
 pub struct Message3 {
     pub s_e: Integer,
     pub s_r: Integer,
@@ -48,6 +52,7 @@ pub struct Message3 {
     pub s_delta: Integer,
 }
 
+#[derive(Clone)]
 pub struct Proof<G: ConvertibleUnknownOrderGroup> {
     pub message1: Message1<G>,
     pub message2: Message2<G>,
@@ -67,24 +72,21 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         }
     }
 
-    pub fn prove<'t, R: MutRandState>(
+    pub fn prove<R: MutRandState, C: RootVerifierChannel<G>>(
         &self,
-        transcript: &'t mut Transcript,
+        verifier_channel: &mut C,
         rng: &mut R,
         _: &Statement<G>,
         witness: &Witness<G>,
-    ) -> Result<Proof<G>, ProofError>
-        where
-            Transcript: TranscriptProtocolRoot<G>,
+    ) -> Result<(), ProofError>
     {
         let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/4));
         let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/4));
         let c_w = G::op(&witness.w, &G::exp(&self.crs.integer_commitment_parameters.h, &r_2));
         let c_r = self.crs.integer_commitment_parameters.commit(&r_2, &r_3)?;
 
-        transcript.append_integer_point(b"c_w", &c_w);
-        transcript.append_integer_point(b"c_r", &c_r);
         let message1 = Message1::<G> { c_w, c_r };
+        verifier_channel.send_message1(&message1)?;
 
         let r_e_range = Integer::from(Integer::u_pow_u(
             2,
@@ -134,18 +136,15 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
             &G::exp(&message1.c_r, &r_e),
             &integer_commitment_alpha4.commit(&r_delta, &r_beta)?,
         );
-        transcript.append_integer_point(b"alpha1", &alpha1);
-        transcript.append_integer_point(b"alpha2", &alpha2);
-        transcript.append_integer_point(b"alpha3", &alpha3);
-        transcript.append_integer_point(b"alpha4", &alpha4);
         let message2 = Message2::<G> {
             alpha1,
             alpha2,
             alpha3,
             alpha4
         };
-
-        let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
+        verifier_channel.send_message2(&message2)?;
+        
+        let c = verifier_channel.receive_challenge()?;
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
         let s_r_2 = r_r_2 - c.clone() * r_2.clone();
@@ -160,52 +159,44 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
             s_beta,
             s_delta,
         };
-        Ok(Proof::<G> {
-            message1,
-            message2,
-            message3,
-        })
+        verifier_channel.send_message3(&message3)?;
+
+        Ok(())
     }
 
-    pub fn verify<'t>(
+    pub fn verify<C: RootProverChannel<G>>(
         &self,
-        transcript: &'t mut Transcript,
+        prover_channel: &mut C,
         statement: &Statement<G>,
-        proof: &Proof<G>,
     ) -> Result<(), VerificationError>
-        where
-            Transcript: TranscriptProtocolRoot<G>,
     {
-        transcript.append_integer_point(b"c_w", &proof.message1.c_w);
-        transcript.append_integer_point(b"c_r", &proof.message1.c_r);
-        transcript.append_integer_point(b"alpha1", &proof.message2.alpha1);
-        transcript.append_integer_point(b"alpha2", &proof.message2.alpha2);
-        transcript.append_integer_point(b"alpha3", &proof.message2.alpha3);
-        transcript.append_integer_point(b"alpha4", &proof.message2.alpha4);
-        let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
+        let message1 = prover_channel.receive_message1()?;
+        let message2 = prover_channel.receive_message2()?;
+        let c = prover_channel.generate_and_send_challenge()?;
+        let message3 = prover_channel.receive_message3()?;
         let expected_alpha1 = G::op(
             &G::exp(&statement.c_e, &c),
-            &self.crs.integer_commitment_parameters.commit(&proof.message3.s_e, &proof.message3.s_r)?
+            &self.crs.integer_commitment_parameters.commit(&message3.s_e, &message3.s_r)?
         );
         let expected_alpha2 = G::op(
-            &G::exp(&proof.message1.c_r, &c),
-            &self.crs.integer_commitment_parameters.commit(&proof.message3.s_r_2, &proof.message3.s_r_3)?
+            &G::exp(&message1.c_r, &c),
+            &self.crs.integer_commitment_parameters.commit(&message3.s_r_2, &message3.s_r_3)?
         );
         let integer_commitment_alpha3 = IntegerCommitment::<G>::new(
-            &proof.message1.c_w,
+            &message1.c_w,
             &G::inv(&self.crs.integer_commitment_parameters.h),
         );
         let expected_alpha3 = G::op(
             &G::exp(&statement.acc, &c),
-            &integer_commitment_alpha3.commit(&proof.message3.s_e, &proof.message3.s_beta)?,
+            &integer_commitment_alpha3.commit(&message3.s_e, &message3.s_beta)?,
         );
         let integer_commitment_alpha4 = IntegerCommitment::<G>::new(
             &G::inv(&self.crs.integer_commitment_parameters.h),
             &G::inv(&self.crs.integer_commitment_parameters.g),
         );
         let expected_alpha4 = G::op(
-            &G::exp(&proof.message1.c_r, &proof.message3.s_e),
-            &integer_commitment_alpha4.commit(&proof.message3.s_delta, &proof.message3.s_beta)?,
+            &G::exp(&message1.c_r, &message3.s_e),
+            &integer_commitment_alpha4.commit(&message3.s_delta, &message3.s_beta)?,
         );
 
         let s_e_expected_right = Integer::from(Integer::u_pow_u(
@@ -216,13 +207,13 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         ));
 
         let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
-        let is_s_e_in_range = proof.message3.s_e >= s_e_expected_left && proof.message3.s_e <= s_e_expected_right;
+        let is_s_e_in_range = message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
 
 
-        if expected_alpha1 == proof.message2.alpha1 &&
-            expected_alpha2 == proof.message2.alpha2 &&
-            expected_alpha3 == proof.message2.alpha3 &&
-            expected_alpha4 == proof.message2.alpha4 &&
+        if expected_alpha1 == message2.alpha1 &&
+            expected_alpha2 == message2.alpha2 &&
+            expected_alpha3 == message2.alpha3 &&
+            expected_alpha4 == message2.alpha4 &&
             is_s_e_in_range {
             Ok(())
         } else {
@@ -234,14 +225,18 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use algebra::bls12_381::G1Projective;
+    use algebra::bls12_381::{Bls12_381, G1Projective};
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
-    use crate::commitments::Commitment;
+    use crate::{
+        parameters::Parameters,
+        commitments::Commitment,
+        transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::range::snark::Protocol as RPProtocol,
+    };
     use rug::rand::RandState;
     use accumulator::group::{Group, Rsa2048};
     use super::{Protocol, Statement, Witness};
-    use crate::parameters::Parameters;
     use merlin::Transcript;
     use accumulator::AccumulatorWithoutHashToPrime;
 
@@ -259,7 +254,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_root;
+        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);
 
         let value = Integer::from(LARGE_PRIMES[0]);
@@ -275,18 +270,21 @@ mod test {
         assert_eq!(Rsa2048::exp(&w, &value), acc);
 
         let mut proof_transcript = Transcript::new(b"root");
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
         let statement = Statement {
             c_e: commitment,
             acc,
         };
-        let proof = protocol.prove(&mut proof_transcript, &mut rng1, &statement, &Witness {
+        protocol.prove(&mut verifier_channel, &mut rng1, &statement, &Witness {
             e: value,
             r: randomness,
             w,
         }).unwrap();
 
+        let proof = verifier_channel.proof().unwrap();
         let mut verification_transcript = Transcript::new(b"root");
-        protocol.verify(&mut verification_transcript, &statement, &proof).unwrap();
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &proof);
+        protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 
 }

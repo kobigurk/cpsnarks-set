@@ -1,15 +1,15 @@
 use crate::commitments::{
     integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment,
 };
-use crate::parameters::Parameters;
-use crate::transcript::{TranscriptProtocolModEq, TranscriptProtocolChallenge, TranscriptProtocolCurve, TranscriptProtocolInteger};
-use crate::utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q};
+use crate::{
+    parameters::Parameters,
+    utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q},
+    protocols::membership_prime::{ProofError, VerificationError},
+    channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
+};
 use algebra_core::{PrimeField, ProjectiveCurve, UniformRand};
-use merlin::Transcript;
 use rand::Rng;
-use rug::rand::MutRandState;
-use rug::Integer;
-use crate::protocols::membership_prime::{ProofError, VerificationError};
+use rug::{Integer, rand::MutRandState};
 
 #[derive(Clone)]
 pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
@@ -30,17 +30,20 @@ pub struct Witness {
     pub r_q: Integer,
 }
 
+#[derive(Clone)]
 pub struct Message1<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
     pub alpha1: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha2: <PedersenCommitment<P> as Commitment>::Instance,
 }
 
+#[derive(Clone)]
 pub struct Message2<P: ProjectiveCurve> {
     pub s_e: Integer,
     pub s_r: Integer,
     pub s_r_q: P::ScalarField,
 }
 
+#[derive(Clone)]
 pub struct Proof<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
     pub message1: Message1<G, P>,
     pub message2: Message2<P>,
@@ -59,16 +62,14 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         }
     }
 
-    pub fn prove<'t, R1: MutRandState, R2: Rng>(
+    pub fn prove<R1: MutRandState, R2: Rng, C: ModEqVerifierChannel<G, P>> (
         &self,
-        transcript: &'t mut Transcript,
+        verifier_channel: &mut C,
         rng1: &mut R1,
         rng2: &mut R2,
         _: &Statement<G, P>,
         witness: &Witness,
-    ) -> Result<Proof<G, P>, ProofError>
-    where
-        Transcript: TranscriptProtocolModEq<G, P>,
+    ) -> Result<(), ProofError>
     {
         let r_e_range = Integer::from(Integer::u_pow_u(
             2,
@@ -99,12 +100,10 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
             .pedersen_commitment_parameters
             .commit(&integer_mod_q::<P>(&r_e)?, &r_r_q)?;
 
-        transcript.append_integer_point(b"alpha1", &alpha1);
-        transcript.append_curve_point(b"alpha2", &alpha2);
-
         let message1 = Message1::<G, P> { alpha1, alpha2 };
+        verifier_channel.send_message1(&message1)?;
 
-        let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
+        let c = verifier_channel.receive_challenge()?;
         let r_q = P::ScalarField::from_repr(integer_to_bigint_mod_q::<P>(&witness.r_q.clone())?);
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
@@ -112,36 +111,34 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         let s_r_q = r_r_q_field - &(r_q * &P::ScalarField::from_repr(c_big));
 
         let message2 = Message2::<P> { s_e, s_r, s_r_q };
+        verifier_channel.send_message2(&message2)?;
 
-        Ok(Proof { message1, message2 })
+        Ok(())
     }
 
-    pub fn verify<'t>(
+    pub fn verify<C: ModEqProverChannel<G, P>>(
         &self,
-        transcript: &'t mut Transcript,
+        prover_channel: &mut C,
         statement: &Statement<G, P>,
-        proof: &Proof<G, P>,
     ) -> Result<(), VerificationError>
-    where
-        Transcript: TranscriptProtocolModEq<G, P>,
     {
-        transcript.append_integer_point(b"alpha1", &proof.message1.alpha1);
-        transcript.append_curve_point(b"alpha2", &proof.message1.alpha2);
-        let c = transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness);
+        let message1 = prover_channel.receive_message1()?;
+        let c = prover_channel.generate_and_send_challenge()?;
+        let message2 = prover_channel.receive_message2()?;
 
-        let commitment2 = self.crs.integer_commitment_parameters.commit(&proof.message2.s_e, &proof.message2.s_r)?;
+        let commitment2 = self.crs.integer_commitment_parameters.commit(&message2.s_e, &message2.s_r)?;
         let commitment2_extra = G::exp(&statement.c_e, &c);
         let expected_alpha1 = G::op(&commitment2, &commitment2_extra);
 
-        let s_e_mod_q = integer_mod_q::<P>(&proof.message2.s_e)?;
-        let s_r_q_int = bigint_to_integer::<P>(&proof.message2.s_r_q.into_repr());
+        let s_e_mod_q = integer_mod_q::<P>(&message2.s_e)?;
+        let s_r_q_int = bigint_to_integer::<P>(&message2.s_r_q.into_repr());
         let commitment1 = self.crs.pedersen_commitment_parameters.commit(&s_e_mod_q, &s_r_q_int)?;
         let c_big = integer_to_bigint_mod_q::<P>(&c)?;
         let commitment1_extra = statement.c_e_q.mul(P::ScalarField::from_repr(c_big));
         let expected_alpha2 = commitment1 + &commitment1_extra;
 
 
-        if expected_alpha1 == proof.message1.alpha1 && expected_alpha2 == proof.message1.alpha2 {
+        if expected_alpha1 == message1.alpha1 && expected_alpha2 == message1.alpha2 {
             Ok(())
         } else {
             Err(VerificationError::VerificationFailed)
@@ -152,14 +149,18 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
-    use algebra::bls12_381::G1Projective;
+    use algebra::bls12_381::{Bls12_381, G1Projective};
     use rand_xorshift::XorShiftRng;
     use rand::SeedableRng;
-    use crate::commitments::Commitment;
+    use crate::{
+        parameters::Parameters,
+        commitments::Commitment,
+        transcript::modeq::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::range::snark::Protocol as RPProtocol,
+    };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
     use super::{Protocol, Statement, Witness};
-    use crate::parameters::Parameters;
     use merlin::Transcript;
 
     #[test]
@@ -169,7 +170,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
+        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
         let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
 
         let value1 = Integer::from(2);
@@ -183,14 +184,17 @@ mod test {
             c_e: commitment1,
             c_e_q: commitment2,
         };
-        let proof = protocol.prove(&mut proof_transcript, &mut rng1, &mut rng2, &statement, &Witness {
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        protocol.prove(&mut verifier_channel, &mut rng1, &mut rng2, &statement, &Witness {
             e: value1,
             r: randomness1,
             r_q: randomness2,
         }).unwrap();
 
-        let mut verification_transcript = Transcript::new(b"modeq");
-        protocol.verify(&mut verification_transcript, &statement, &proof).unwrap();
-    }
+        let proof = verifier_channel.proof().unwrap();
 
+        let mut verification_transcript = Transcript::new(b"modeq");
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &proof);
+        protocol.verify(&mut prover_channel, &statement).unwrap();
+    }
 }

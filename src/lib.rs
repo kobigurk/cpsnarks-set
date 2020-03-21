@@ -2,6 +2,7 @@
 extern crate quick_error;
 
 pub mod utils;
+pub mod channels;
 pub mod transcript;
 pub mod parameters;
 pub mod protocols;

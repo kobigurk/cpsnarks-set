@@ -1,6 +1,7 @@
 use rand::Rng;
 use crate::{
     parameters::Parameters,
+    channels::range::{RangeProverChannel, RangeVerifierChannel},
     protocols::membership_prime::{SetupError, ProofError, VerificationError},
     commitments::{
         Commitment,
@@ -9,13 +10,11 @@ use crate::{
 };
 use rug::Integer;
 use algebra_core::ProjectiveCurve;
-use merlin::Transcript;
-use crate::transcript::TranscriptProtocolRange;
 
 pub mod snark;
 
 pub trait RangeProofProtocol<P: ProjectiveCurve> {
-    type Proof;
+    type Proof: Clone;
     type Parameters: Clone;
 
     fn from_crs(
@@ -25,23 +24,22 @@ pub trait RangeProofProtocol<P: ProjectiveCurve> {
 
     fn setup<R: Rng>(rng: &mut R, hash_to_prime_bits: u16) -> Result<Self::Parameters, SetupError>;
 
-    fn prove<'t, R: Rng>(
+    fn prove<R: Rng, C: RangeVerifierChannel<P, Self>> (
         &self,
-        transcript: &'t mut Transcript,
+        verifier_channel: &mut C,
         rng: &mut R,
         _: &Statement<P>,
         witness: &Witness,
-    ) -> Result<Self::Proof, ProofError>
+    ) -> Result<(), ProofError>
         where
-            Transcript: TranscriptProtocolRange<P>;
-    fn verify<'t>(
+            Self: Sized;
+    fn verify<C: RangeProverChannel<P, Self>>(
         &self,
-        transcript: &'t mut Transcript,
+        prover_channel: &mut C,
         statement: &Statement<P>,
-        proof: &Self::Proof,
     ) -> Result<(), VerificationError>
         where
-            Transcript: TranscriptProtocolRange<P>;
+            Self: Sized;
 }
 
 pub struct CRSRangeProof<P: ProjectiveCurve, RP: RangeProofProtocol<P>> {
