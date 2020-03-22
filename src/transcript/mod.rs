@@ -2,7 +2,7 @@ use merlin::Transcript;
 use rug::Integer;
 use crate::utils::{
     integer_to_bytes, ConvertibleUnknownOrderGroup, bigint_to_bytes,
-    curve::{Field, CurvePointProjective},
+    curve::{CurvePointProjective},
 };
 use algebra::ProjectiveCurve;
 use rug::integer::Order;

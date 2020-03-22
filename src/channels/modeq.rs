@@ -3,7 +3,7 @@ use super::ChannelError;
 use crate::{
     utils::{
         ConvertibleUnknownOrderGroup,
-        curve::{Field, CurvePointProjective},
+        curve::{CurvePointProjective},
     },
     protocols::modeq::{Message1, Message2}
 };
