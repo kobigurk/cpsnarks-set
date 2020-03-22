@@ -3,7 +3,7 @@ use crate::commitments::{CommitmentError, Commitment};
 use rug::Integer;
 use crate::utils::{
     integer_to_bigint,
-    curve::{Field, CurvePointProjective},
+    curve::CurvePointProjective,
 };
 
 #[derive(Clone)]
