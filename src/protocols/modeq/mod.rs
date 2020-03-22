@@ -4,7 +4,7 @@ use crate::commitments::{
 use crate::{
     parameters::Parameters,
     utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q},
-    protocols::membership_prime::{ProofError, VerificationError},
+    protocols::membership::{ProofError, VerificationError},
     channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
 };
 use algebra_core::{PrimeField, ProjectiveCurve, UniformRand};
@@ -79,7 +79,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         ));
         let r_e = random_symmetric_range(rng1, &r_e_range);
         let r_r_range = Integer::from(
-            G::order_upper_bound() / 4
+            G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                     2,
                     (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
@@ -170,7 +170,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
         let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
 
         let value1 = Integer::from(2);

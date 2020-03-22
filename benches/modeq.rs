@@ -17,7 +17,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     rng1.seed(&Integer::from(13));
     let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-    let crs = cpsnarks_set::protocols::membership_prime::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
+    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective>::setup(&params, &mut rng1, &mut rng2).crs.crs_modeq;
     let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
 
     let value1 = Integer::from(2);

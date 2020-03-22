@@ -15,7 +15,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("RSA exponentiation", |b| b.iter(|| {
         let e = Rsa2048::elem(&random_between(&mut rng1, &Integer::from(0), &Rsa2048::order_upper_bound()));
         let r_range = Integer::from(
-            Rsa2048::order_upper_bound() / 4
+            Rsa2048::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                 2,
                 (params.security_zk + params.security_soundness)

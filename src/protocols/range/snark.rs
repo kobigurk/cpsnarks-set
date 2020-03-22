@@ -13,7 +13,7 @@ use crate::{
     utils::{integer_to_bigint_mod_q},
     protocols::{
         range::{RangeProofProtocol, CRSRangeProof, Statement, Witness},
-        membership_prime::{SetupError, ProofError, VerificationError},
+        membership::{SetupError, ProofError, VerificationError},
     }
 };
 use rand::Rng;
@@ -146,7 +146,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_range;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_range;
         let protocol = Protocol::<Bls12_381>::from_crs(&crs);
 
         let value = Integer::from(Integer::u_pow_u(

@@ -5,7 +5,7 @@ use crate::{
         Commitment,
         integer::IntegerCommitment,
     },
-    protocols::membership_prime::{ProofError, VerificationError},
+    protocols::membership::{ProofError, VerificationError},
     channels::root::{RootProverChannel, RootVerifierChannel},
 };
 use rug::Integer;
@@ -80,8 +80,8 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         witness: &Witness<G>,
     ) -> Result<(), ProofError>
     {
-        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/4));
-        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/4));
+        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
+        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
         let c_w = G::op(&witness.w, &G::exp(&self.crs.integer_commitment_parameters.h, &r_2));
         let c_r = self.crs.integer_commitment_parameters.commit(&r_2, &r_3)?;
 
@@ -97,7 +97,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_e = random_symmetric_range(rng, &r_e_range);
 
         let r_r_range = Integer::from(
-            G::order_upper_bound() / 4
+            G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                 2,
                 (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
@@ -109,7 +109,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_r_3 = random_symmetric_range(rng, &r_r_range);
 
         let r_beta_delta_range = Integer::from(
-            G::order_upper_bound() / 4
+            G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                 2,
                 (self.crs.parameters.security_zk
@@ -254,7 +254,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
 
-        let crs = crate::protocols::membership_prime::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);
 
         let value = Integer::from(LARGE_PRIMES[0]);

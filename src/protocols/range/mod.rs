@@ -2,7 +2,7 @@ use rand::Rng;
 use crate::{
     parameters::Parameters,
     channels::range::{RangeProverChannel, RangeVerifierChannel},
-    protocols::membership_prime::{SetupError, ProofError, VerificationError},
+    protocols::membership::{SetupError, ProofError, VerificationError},
     commitments::{
         Commitment,
         pedersen::PedersenCommitment
