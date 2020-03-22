@@ -3,23 +3,25 @@ use crate::commitments::{
 };
 use crate::{
     parameters::Parameters,
-    utils::{bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q},
+    utils::{
+        bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q,
+        curve::{Field, CurvePointProjective},
+    },
     protocols::membership::{ProofError, VerificationError},
     channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
 };
-use algebra_core::{PrimeField, ProjectiveCurve, UniformRand};
 use rand::Rng;
 use rug::{Integer, rand::MutRandState};
 
 #[derive(Clone)]
-pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     // G contains the information about Z^*_N
     pub parameters: Parameters,
     pub integer_commitment_parameters: IntegerCommitment<G>, // G, H
     pub pedersen_commitment_parameters: PedersenCommitment<P>, // g, h
 }
 
-pub struct Statement<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+pub struct Statement<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     pub c_e: <IntegerCommitment<G> as Commitment>::Instance,
     pub c_e_q: <PedersenCommitment<P> as Commitment>::Instance,
 }
@@ -31,29 +33,29 @@ pub struct Witness {
 }
 
 #[derive(Clone)]
-pub struct Message1<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+pub struct Message1<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     pub alpha1: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha2: <PedersenCommitment<P> as Commitment>::Instance,
 }
 
 #[derive(Clone)]
-pub struct Message2<P: ProjectiveCurve> {
+pub struct Message2<P: CurvePointProjective> {
     pub s_e: Integer,
     pub s_r: Integer,
     pub s_r_q: P::ScalarField,
 }
 
 #[derive(Clone)]
-pub struct Proof<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+pub struct Proof<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     pub message1: Message1<G, P>,
     pub message2: Message2<P>,
 }
 
-pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> {
+pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     pub crs: CRSModEq<G, P>,
 }
 
-impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
+impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
     pub fn from_crs(
         crs: &CRSModEq<G, P>
     ) -> Protocol<G, P> {
@@ -89,10 +91,10 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         let r_r = random_symmetric_range(rng1, &r_r_range);
         assert!(
             self.crs.parameters.field_size_bits as usize
-                >= <P::ScalarField as PrimeField>::size_in_bits()
+                >= P::ScalarField::size_in_bits()
         );
         let r_r_q_field = P::ScalarField::rand(rng2);
-        let r_r_q = bigint_to_integer::<P>(&r_r_q_field.into_repr());
+        let r_r_q = bigint_to_integer::<P>(&r_r_q_field);
 
         let alpha1 = self.crs.integer_commitment_parameters.commit(&r_e, &r_r)?;
         let alpha2 = self
@@ -104,11 +106,11 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         verifier_channel.send_message1(&message1)?;
 
         let c = verifier_channel.receive_challenge()?;
-        let r_q = P::ScalarField::from_repr(integer_to_bigint_mod_q::<P>(&witness.r_q.clone())?);
+        let r_q = integer_to_bigint_mod_q::<P>(&witness.r_q.clone())?;
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
         let c_big = integer_to_bigint_mod_q::<P>(&c)?;
-        let s_r_q = r_r_q_field - &(r_q * &P::ScalarField::from_repr(c_big));
+        let s_r_q = r_r_q_field.sub(&(r_q.mul(&c_big)));
 
         let message2 = Message2::<P> { s_e, s_r, s_r_q };
         verifier_channel.send_message2(&message2)?;
@@ -131,11 +133,11 @@ impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve> Protocol<G, P> {
         let expected_alpha1 = G::op(&commitment2, &commitment2_extra);
 
         let s_e_mod_q = integer_mod_q::<P>(&message2.s_e)?;
-        let s_r_q_int = bigint_to_integer::<P>(&message2.s_r_q.into_repr());
+        let s_r_q_int = bigint_to_integer::<P>(&message2.s_r_q);
         let commitment1 = self.crs.pedersen_commitment_parameters.commit(&s_e_mod_q, &s_r_q_int)?;
         let c_big = integer_to_bigint_mod_q::<P>(&c)?;
-        let commitment1_extra = statement.c_e_q.mul(P::ScalarField::from_repr(c_big));
-        let expected_alpha2 = commitment1 + &commitment1_extra;
+        let commitment1_extra = statement.c_e_q.mul(&c_big);
+        let expected_alpha2 = commitment1.add(&commitment1_extra);
 
 
         if expected_alpha1 == message1.alpha1 && expected_alpha2 == message1.alpha2 {

@@ -79,7 +79,7 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
     {
         let c = RangeProofCircuit::<E> {
             required_bit_size: self.crs.parameters.hash_to_prime_bits,
-            value: Some(integer_to_bigint_mod_q::<E::G1Projective>(&witness.e.clone())?.into()),
+            value: Some(integer_to_bigint_mod_q::<E::G1Projective>(&witness.e.clone())?),
         };
         let v = E::Fr::rand(rng);
         let proof = ccgro16::create_random_proof::<E, _, _>(c, v, &self.crs.range_proof_parameters, rng)?;

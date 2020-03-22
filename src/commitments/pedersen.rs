@@ -1,16 +1,18 @@
-use algebra_core::ProjectiveCurve;
 use rand::Rng;
 use crate::commitments::{CommitmentError, Commitment};
 use rug::Integer;
-use crate::utils::integer_to_bigint;
+use crate::utils::{
+    integer_to_bigint,
+    curve::{Field, CurvePointProjective},
+};
 
 #[derive(Clone)]
-pub struct PedersenCommitment<P: ProjectiveCurve> {
+pub struct PedersenCommitment<P: CurvePointProjective> {
     g: P,
     h: P,
 }
 
-impl<P: ProjectiveCurve> PedersenCommitment<P> {
+impl<P: CurvePointProjective> PedersenCommitment<P> {
     pub fn setup<R: Rng>(rng: &mut R) -> PedersenCommitment<P> {
         PedersenCommitment {
             g: P::rand(rng),
@@ -27,21 +29,21 @@ impl<P: ProjectiveCurve> PedersenCommitment<P> {
 
 
 }
-impl<P: ProjectiveCurve> Commitment for PedersenCommitment<P> {
+impl<P: CurvePointProjective> Commitment for PedersenCommitment<P> {
     type Instance = P;
 
     fn commit(&self, value: &Integer, randomness: &Integer)
         -> Result<Self::Instance, CommitmentError> {
         let v = integer_to_bigint::<P>(value);
         let r = integer_to_bigint::<P>(randomness);
-        Ok(self.g.mul(v) +
-            &self.h.mul(r))
+        Ok(self.g.mul(&v).add(
+            &self.h.mul(&r)))
     }
 
     fn open(&self, commitment: &Self::Instance, value: &Integer, randomness: &Integer)
         -> Result<(), CommitmentError> {
-        let expected = self.g.mul(integer_to_bigint::<P>(value)) +
-            &self.h.mul(integer_to_bigint::<P>(randomness));
+        let expected = self.g.mul(&integer_to_bigint::<P>(value)).add(
+            &self.h.mul(&integer_to_bigint::<P>(randomness)));
         if expected == *commitment {
             Ok(())
         } else {

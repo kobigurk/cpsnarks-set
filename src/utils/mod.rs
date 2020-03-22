@@ -1,8 +1,10 @@
 use rug::Integer;
 use rug::rand::MutRandState;
-use algebra_core::{PrimeField, ProjectiveCurve, biginteger::BigInteger, FpParameters};
 use rug::integer::Order;
 use accumulator::group::{ElemTo, ElemFrom, UnknownOrderGroup};
+
+pub mod curve;
+use curve::{CurvePointProjective, Field};
 
 pub trait ConvertibleUnknownOrderGroup : UnknownOrderGroup + ElemFrom<Integer> + ElemTo<Integer> {}
 impl<T: UnknownOrderGroup + ElemFrom<Integer> + ElemTo<Integer>> ConvertibleUnknownOrderGroup for T {}
@@ -48,32 +50,38 @@ pub fn integer_to_bytes(num: &Integer) -> Vec<u8> {
     bytes
 }
 
-pub fn integer_to_bigint<P: ProjectiveCurve>(num: &Integer)
-                         -> <P::ScalarField as PrimeField>::BigInt {
+pub fn integer_to_bigint<P: CurvePointProjective>(num: &Integer)
+                         -> P::ScalarField {
     let bytes = integer_to_bytes(num);
     let bits = bytes_big_endian_to_bits_big_endian(&bytes);
-    <P::ScalarField as PrimeField>::BigInt::from_bits(&bits)
+    P::ScalarField::from_bits(&bits)
 }
 
-pub fn integer_mod_q<P: ProjectiveCurve>(num: &Integer) -> Result<Integer, Integer> {
-    let q = bigint_to_integer::<P>(&<P::ScalarField as PrimeField>::Params::MODULUS);
+pub fn integer_mod_q<P: CurvePointProjective>(num: &Integer) -> Result<Integer, Integer> {
+    let q = P::modulus();
     num.clone().pow_mod(&Integer::from(1), &q)
 }
 
-pub fn integer_to_bigint_mod_q<P: ProjectiveCurve>(num: &Integer)
-                                             -> Result<<P::ScalarField as PrimeField>::BigInt, Integer> {
+pub fn integer_to_bigint_mod_q<P: CurvePointProjective>(num: &Integer)
+                                             -> Result<P::ScalarField, Integer> {
     let bytes = integer_to_bytes(&integer_mod_q::<P>(num)?);
     let bits = bytes_big_endian_to_bits_big_endian(&bytes);
-    Ok(<P::ScalarField as PrimeField>::BigInt::from_bits(&bits))
+    Ok(P::ScalarField::from_bits(&bits))
 }
 
-pub fn bigint_to_bytes<P: ProjectiveCurve>(num: &<P::ScalarField as PrimeField>::BigInt) -> Vec<u8> {
+pub fn bigint_to_bytes<P: CurvePointProjective>(num: &P::ScalarField) -> Vec<u8> {
     let bits = num.to_bits();
     let bytes = bits_big_endian_to_bytes_big_endian(&bits);
     bytes
 }
 
-pub fn bigint_to_integer<P: ProjectiveCurve>(num: &<P::ScalarField as PrimeField>::BigInt)
+pub fn bytes_to_integer(bytes: &[u8]) ->  Integer {
+    let mut big = Integer::from(0);
+    big.assign_digits(bytes, Order::MsfBe);
+    big
+}
+
+pub fn bigint_to_integer<P: CurvePointProjective>(num: &P::ScalarField)
                                              ->  Integer {
     let bytes = bigint_to_bytes::<P>(num);
     let mut big = Integer::from(0);
