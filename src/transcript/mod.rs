@@ -4,7 +4,6 @@ use crate::utils::{
     integer_to_bytes, ConvertibleUnknownOrderGroup, bigint_to_bytes,
     curve::{CurvePointProjective},
 };
-use algebra::ProjectiveCurve;
 use rug::integer::Order;
 
 pub mod root;
@@ -23,8 +22,8 @@ quick_error! {
 }
 
 
-pub trait TranscriptProtocolMembershipPrime<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, PP: ProjectiveCurve>:
-    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolRange<PP> {
+pub trait TranscriptProtocolMembershipPrime<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective>:
+    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolRange<P> {
 
 }
 

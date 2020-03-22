@@ -7,13 +7,13 @@ use crate::{
         Commitment,
         pedersen::PedersenCommitment
     },
+    utils::curve::CurvePointProjective,
 };
 use rug::Integer;
-use algebra_core::ProjectiveCurve;
 
 pub mod snark;
 
-pub trait RangeProofProtocol<P: ProjectiveCurve> {
+pub trait RangeProofProtocol<P: CurvePointProjective> {
     type Proof: Clone;
     type Parameters: Clone;
 
@@ -42,13 +42,13 @@ pub trait RangeProofProtocol<P: ProjectiveCurve> {
             Self: Sized;
 }
 
-pub struct CRSRangeProof<P: ProjectiveCurve, RP: RangeProofProtocol<P>> {
+pub struct CRSRangeProof<P: CurvePointProjective, RP: RangeProofProtocol<P>> {
     pub parameters: Parameters,
     pub pedersen_commitment_parameters: PedersenCommitment<P>,
     pub range_proof_parameters: RP::Parameters,
 }
 
-impl<P: ProjectiveCurve, RP: RangeProofProtocol<P>> Clone for CRSRangeProof<P, RP> {
+impl<P: CurvePointProjective, RP: RangeProofProtocol<P>> Clone for CRSRangeProof<P, RP> {
     fn clone(&self) -> Self {
         Self {
             parameters: self.parameters.clone(),
@@ -58,7 +58,7 @@ impl<P: ProjectiveCurve, RP: RangeProofProtocol<P>> Clone for CRSRangeProof<P, R
     }
 }
 
-pub struct Statement<P: ProjectiveCurve> {
+pub struct Statement<P: CurvePointProjective> {
     pub c_e_q: <PedersenCommitment<P> as Commitment>::Instance,
 }
 

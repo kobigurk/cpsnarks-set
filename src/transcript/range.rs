@@ -1,32 +1,32 @@
 use merlin::Transcript;
-use algebra_core::curves::ProjectiveCurve;
 use crate::{
     channels::{
         ChannelError,
         range::{RangeProverChannel, RangeVerifierChannel},
     },
     protocols::range::{CRSRangeProof, RangeProofProtocol},
+    utils::curve::CurvePointProjective,
 };
 use super::{TranscriptProtocolCurve, TranscriptProtocolChallenge, TranscriptChannelError};
 
-pub trait TranscriptProtocolRange<P: ProjectiveCurve>:
+pub trait TranscriptProtocolRange<P: CurvePointProjective>:
     TranscriptProtocolCurve<P> + TranscriptProtocolChallenge {
     fn range_domain_sep(&mut self);
 }
 
-impl<P: ProjectiveCurve> TranscriptProtocolRange<P> for Transcript {
+impl<P: CurvePointProjective> TranscriptProtocolRange<P> for Transcript {
     fn range_domain_sep(&mut self) {
         self.append_message(b"dom-sep", b"range");
     }
 }
 
-pub struct TranscriptVerifierChannel<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
+pub struct TranscriptVerifierChannel<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
     proof: Option<RP::Proof>,
     crs_type: std::marker::PhantomData<CRSRangeProof<P, RP>>,
     transcript_type: std::marker::PhantomData<&'a mut T>,
 }
 
-impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptVerifierChannel<'a, P, RP, T> {
+impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptVerifierChannel<'a, P, RP, T> {
     pub fn new(_: &CRSRangeProof<P, RP>, _: &'a mut T) -> TranscriptVerifierChannel<'a, P, RP, T> {
         TranscriptVerifierChannel {
             proof: None,
@@ -44,20 +44,20 @@ impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRan
     }
 }
 
-impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> RangeVerifierChannel<P, RP> for TranscriptVerifierChannel<'a, P, RP, T> {
+impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> RangeVerifierChannel<P, RP> for TranscriptVerifierChannel<'a, P, RP, T> {
     fn send_proof(&mut self, proof: &RP::Proof) -> Result<(), ChannelError> {
         self.proof = Some(proof.clone());
         Ok(())
     }
 }
 
-pub struct TranscriptProverChannel<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
+pub struct TranscriptProverChannel<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
     proof: RP::Proof,
     crs_type: std::marker::PhantomData<CRSRangeProof<P, RP>>,
     transcript_type: std::marker::PhantomData<&'a mut T>,
 }
 
-impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptProverChannel<'a, P, RP, T> {
+impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptProverChannel<'a, P, RP, T> {
     pub fn new(_: &CRSRangeProof<P, RP>, _: &'a mut T, proof: &RP::Proof) -> TranscriptProverChannel<'a, P, RP, T> {
         TranscriptProverChannel {
             proof: proof.clone(),
@@ -67,7 +67,7 @@ impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRan
     }
 }
 
-impl<'a, P: ProjectiveCurve, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> RangeProverChannel<P, RP> for TranscriptProverChannel<'a, P, RP, T> {
+impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> RangeProverChannel<P, RP> for TranscriptProverChannel<'a, P, RP, T> {
     fn receive_proof(&mut self) -> Result<RP::Proof, ChannelError> {
         Ok(self.proof.clone())
     }
