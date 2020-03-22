@@ -9,6 +9,8 @@ use r1cs_std::{
     eq::EqGadget,
 };
 use crate::{
+    parameters::Parameters,
+    commitments::pedersen::PedersenCommitment,
     channels::range::{RangeProverChannel, RangeVerifierChannel},
     utils::{integer_to_bigint_mod_q},
     protocols::{
@@ -50,8 +52,8 @@ pub struct Protocol<E: PairingEngine> {
 }
 
 impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
-    type Proof = ccgro16::Proof<E>;
-    type Parameters = ccgro16::Parameters<E>;
+    type Proof = legogro16::Proof<E>;
+    type Parameters = legogro16::Parameters<E>;
 
     fn from_crs(
         crs: &CRSRangeProof<E::G1Projective, Self>
@@ -61,12 +63,14 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
         }
     }
 
-    fn setup<R: Rng>(rng: &mut R, hash_to_prime_bits: u16) -> Result<Self::Parameters, SetupError> {
+    fn setup<R: Rng>(rng: &mut R, pedersen_commitment_parameters: &PedersenCommitment<E::G1Projective>, parameters: &Parameters) -> Result<Self::Parameters, SetupError> {
         let c = RangeProofCircuit::<E> {
-            required_bit_size: hash_to_prime_bits,
+            required_bit_size: parameters.hash_to_prime_bits,
             value: None,
         };
-        Ok(ccgro16::generate_random_parameters(c, rng)?)
+        let base_one = E::G1Projective::rand(rng);
+        let pedersen_bases = vec![base_one, pedersen_commitment_parameters.g, pedersen_commitment_parameters.h];
+        Ok(legogro16::generate_random_parameters(c, &pedersen_bases, rng)?)
     }
 
     fn prove<R: Rng, C: RangeVerifierChannel<E::G1Projective, Self>>(
@@ -82,7 +86,8 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
             value: Some(integer_to_bigint_mod_q::<E::G1Projective>(&witness.e.clone())?),
         };
         let v = E::Fr::rand(rng);
-        let proof = ccgro16::create_random_proof::<E, _, _>(c, v, &self.crs.range_proof_parameters, rng)?;
+        let link_v = integer_to_bigint_mod_q::<E::G1Projective>(&witness.r_q.clone())?;
+        let proof = legogro16::create_random_proof::<E, _, _>(c, v, link_v, &self.crs.range_proof_parameters, rng)?;
         verifier_channel.send_proof(&proof)?;
         Ok(())
     }
@@ -94,8 +99,8 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
     ) -> Result<(), VerificationError>
     {
         let proof = prover_channel.receive_proof()?;
-        let pvk = ccgro16::prepare_verifying_key(&self.crs.range_proof_parameters.vk);
-        if !ccgro16::verify_proof(&pvk, &proof)? {
+        let pvk = legogro16::prepare_verifying_key(&self.crs.range_proof_parameters.vk);
+        if !legogro16::verify_proof(&pvk, &proof)? {
             return Err(VerificationError::VerificationFailed);
         }
 

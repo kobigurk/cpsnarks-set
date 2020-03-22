@@ -26,7 +26,7 @@ pub trait RangeProofProtocol<P: CurvePointProjective> {
     ) -> Self
     where Self : Sized;
 
-    fn setup<R: RngCore + CryptoRng>(rng: &mut R, hash_to_prime_bits: u16) -> Result<Self::Parameters, SetupError>;
+    fn setup<R: RngCore + CryptoRng>(rng: &mut R, pedersen_commitment_parameters: &PedersenCommitment<P>, parameters: &Parameters) -> Result<Self::Parameters, SetupError>;
 
     fn prove<R: RngCore + CryptoRng, C: RangeVerifierChannel<P, Self>> (
         &self,

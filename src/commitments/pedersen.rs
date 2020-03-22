@@ -8,8 +8,8 @@ use crate::utils::{
 
 #[derive(Clone)]
 pub struct PedersenCommitment<P: CurvePointProjective> {
-    g: P,
-    h: P,
+    pub g: P,
+    pub h: P,
 }
 
 impl<P: CurvePointProjective> PedersenCommitment<P> {

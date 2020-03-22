@@ -85,7 +85,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
     ) -> Result<Protocol<G, P, RP>, SetupError> {
         let integer_commitment_parameters = IntegerCommitment::<G>::setup(rng1);
         let pedersen_commitment_parameters = PedersenCommitment::<P>::setup(rng2);
-        let range_proof_parameters = RP::setup(rng2, parameters.hash_to_prime_bits)?;
+        let range_proof_parameters = RP::setup(rng2, &pedersen_commitment_parameters, parameters)?;
         Ok(Protocol {
             crs: CRS::<G, P, RP> {
                 parameters: parameters.clone(),
