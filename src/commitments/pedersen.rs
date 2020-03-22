@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::{RngCore, CryptoRng};
 use crate::commitments::{CommitmentError, Commitment};
 use rug::Integer;
 use crate::utils::{
@@ -13,7 +13,7 @@ pub struct PedersenCommitment<P: CurvePointProjective> {
 }
 
 impl<P: CurvePointProjective> PedersenCommitment<P> {
-    pub fn setup<R: Rng>(rng: &mut R) -> PedersenCommitment<P> {
+    pub fn setup<R: RngCore + CryptoRng>(rng: &mut R) -> PedersenCommitment<P> {
         PedersenCommitment {
             g: P::rand(rng),
             h: P::rand(rng),
@@ -52,18 +52,17 @@ impl<P: CurvePointProjective> Commitment for PedersenCommitment<P> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature="zexe"))]
 mod test {
     use rug::Integer;
     use super::PedersenCommitment;
     use algebra::bls12_381::G1Projective;
-    use rand_xorshift::XorShiftRng;
-    use rand::SeedableRng;
+    use rand::thread_rng;
     use crate::commitments::Commitment;
 
     #[test]
     fn test_simple_commitment() {
-        let mut rng = XorShiftRng::seed_from_u64(1231275789u64);
+        let mut rng = thread_rng();
 
         let value = Integer::from(2);
         let randomness = Integer::from(5);

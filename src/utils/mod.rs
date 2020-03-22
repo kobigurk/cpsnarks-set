@@ -30,6 +30,7 @@ pub fn bytes_big_endian_to_bits_big_endian(bytes: &[u8]) -> Vec<bool> {
     bits
 }
 
+
 pub fn bits_big_endian_to_bytes_big_endian(bits: &[bool]) -> Vec<u8> {
     let byte_length = (bits.len() + 7)/8;
     let mut bytes = vec![];
@@ -58,7 +59,7 @@ pub fn integer_to_bigint<P: CurvePointProjective>(num: &Integer)
 }
 
 pub fn integer_mod_q<P: CurvePointProjective>(num: &Integer) -> Result<Integer, Integer> {
-    let q = P::modulus();
+    let q = P::ScalarField::modulus();
     num.clone().pow_mod(&Integer::from(1), &q)
 }
 
@@ -89,7 +90,7 @@ pub fn bigint_to_integer<P: CurvePointProjective>(num: &P::ScalarField)
     big
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature="zexe"))]
 mod test {
     use crate::utils::{integer_to_bigint, bigint_to_integer};
     use rug::Integer;

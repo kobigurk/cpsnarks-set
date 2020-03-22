@@ -109,8 +109,7 @@ mod test {
     use algebra::bls12_381::{Bls12_381, G1Projective, Fr};
     use r1cs_std::test_constraint_system::TestConstraintSystem;
     use r1cs_core::ConstraintSynthesizer;
-    use rand_xorshift::XorShiftRng;
-    use rand::SeedableRng;
+    use rand::thread_rng;
     use crate::{
         parameters::Parameters,
         commitments::Commitment,
@@ -144,7 +143,7 @@ mod test {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
-        let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
+        let mut rng2 = thread_rng();
 
         let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_range;
         let protocol = Protocol::<Bls12_381>::from_crs(&crs);

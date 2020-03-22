@@ -1,8 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rug::Integer;
 use algebra::bls12_381::{Bls12_381, G1Projective};
-use rand_xorshift::XorShiftRng;
-use rand::SeedableRng;
+use rand::thread_rng;
 use cpsnarks_set::commitments::Commitment;
 use rug::rand::RandState;
 use accumulator::group::{Group, Rsa2048};
@@ -28,7 +27,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let params = Parameters::from_security_level(128).unwrap();
     let mut rng1 = RandState::new();
     rng1.seed(&Integer::from(13));
-    let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
+    let mut rng2 = thread_rng();
 
     let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
     let protocol = Protocol::<Rsa2048>::from_crs(&crs);

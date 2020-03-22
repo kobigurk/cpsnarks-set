@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::{RngCore, CryptoRng};
 use crate::{
     parameters::Parameters,
     channels::range::{RangeProverChannel, RangeVerifierChannel},
@@ -11,7 +11,11 @@ use crate::{
 };
 use rug::Integer;
 
+#[cfg(feature = "zexe")]
 pub mod snark;
+
+#[cfg(feature = "dalek")]
+pub mod bp;
 
 pub trait RangeProofProtocol<P: CurvePointProjective> {
     type Proof: Clone;
@@ -22,9 +26,9 @@ pub trait RangeProofProtocol<P: CurvePointProjective> {
     ) -> Self
     where Self : Sized;
 
-    fn setup<R: Rng>(rng: &mut R, hash_to_prime_bits: u16) -> Result<Self::Parameters, SetupError>;
+    fn setup<R: RngCore + CryptoRng>(rng: &mut R, hash_to_prime_bits: u16) -> Result<Self::Parameters, SetupError>;
 
-    fn prove<R: Rng, C: RangeVerifierChannel<P, Self>> (
+    fn prove<R: RngCore + CryptoRng, C: RangeVerifierChannel<P, Self>> (
         &self,
         verifier_channel: &mut C,
         rng: &mut R,

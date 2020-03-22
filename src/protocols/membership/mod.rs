@@ -1,4 +1,3 @@
-use algebra_core::ProjectiveCurve;
 use crate::{
     utils::ConvertibleUnknownOrderGroup,
     parameters::Parameters,
@@ -11,9 +10,10 @@ use crate::{
         range::{CRSRangeProof, RangeProofProtocol},
     },
     channels::ChannelError,
+    utils::curve::CurvePointProjective,
 };
 use rug::rand::MutRandState;
-use rand::Rng;
+use rand::{RngCore, CryptoRng};
 use rug::Integer;
 use r1cs_core::SynthesisError;
 
@@ -65,7 +65,7 @@ quick_error! {
     }
 }
 
-pub struct CRS<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve, RP: RangeProofProtocol<P>> {
+pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> {
     // G contains the information about Z^*_N
     pub parameters: Parameters,
     pub crs_modeq: CRSModEq<G, P>,
@@ -73,12 +73,12 @@ pub struct CRS<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve, RP: RangePro
     pub crs_range: CRSRangeProof<P, RP>,
 }
 
-pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve, RP: RangeProofProtocol<P>> {
+pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> {
     pub crs: CRS<G, P, RP>,
 }
 
-impl<G: ConvertibleUnknownOrderGroup, P: ProjectiveCurve, RP: RangeProofProtocol<P>> Protocol<G, P, RP> {
-    pub fn setup<R1: MutRandState, R2: Rng>(
+impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> Protocol<G, P, RP> {
+    pub fn setup<R1: MutRandState, R2: RngCore + CryptoRng>(
         parameters: &Parameters,
         rng1: &mut R1,
         rng2: &mut R2,

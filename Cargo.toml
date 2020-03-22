@@ -15,9 +15,15 @@ rand = { version = "0.7" }
 r1cs-core = { path = "../zexe/r1cs-core" }
 r1cs-std = { path = "../zexe/r1cs-std" }
 ccgro16 = { path = "../zexe/ccgro16" }
+curve25519-dalek = { version = "2" }
+bulletproofs = { version = "2", optional = true }
+
+[features]
+dalek = ["bulletproofs"]
+zexe = []
+default = ["zexe"]
 
 [dev-dependencies]
-rand_xorshift = "0.2"
 criterion = "0.3"
 
 [lib]

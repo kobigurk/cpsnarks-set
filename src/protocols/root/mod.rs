@@ -222,12 +222,11 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature="zexe"))]
 mod test {
     use rug::Integer;
     use algebra::bls12_381::{Bls12_381, G1Projective};
-    use rand_xorshift::XorShiftRng;
-    use rand::SeedableRng;
+    use rand::thread_rng;
     use crate::{
         parameters::Parameters,
         commitments::Commitment,
@@ -252,7 +251,7 @@ mod test {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
-        let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
+        let mut rng2 = thread_rng();
 
         let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);

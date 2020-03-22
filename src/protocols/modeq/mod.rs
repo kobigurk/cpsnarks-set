@@ -10,7 +10,7 @@ use crate::{
     protocols::membership::{ProofError, VerificationError},
     channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
 };
-use rand::Rng;
+use rand::{RngCore, CryptoRng};
 use rug::{Integer, rand::MutRandState};
 
 #[derive(Clone)]
@@ -64,7 +64,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
         }
     }
 
-    pub fn prove<R1: MutRandState, R2: Rng, C: ModEqVerifierChannel<G, P>> (
+    pub fn prove<R1: MutRandState, R2: RngCore + CryptoRng, C: ModEqVerifierChannel<G, P>> (
         &self,
         verifier_channel: &mut C,
         rng1: &mut R1,
@@ -148,12 +148,11 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature="zexe"))]
 mod test {
     use rug::Integer;
     use algebra::bls12_381::{Bls12_381, G1Projective};
-    use rand_xorshift::XorShiftRng;
-    use rand::SeedableRng;
+    use rand::thread_rng;
     use crate::{
         parameters::Parameters,
         commitments::Commitment,
@@ -170,7 +169,7 @@ mod test {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
-        let mut rng2 = XorShiftRng::seed_from_u64(1231275789u64);
+        let mut rng2 = thread_rng();
 
         let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
         let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
