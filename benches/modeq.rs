@@ -1,4 +1,6 @@
+use criterion::{criterion_group, criterion_main, Criterion};
 use rug::Integer;
+use std::cell::RefCell;
 use algebra::bls12_381::{Bls12_381, G1Projective};
 use rand::thread_rng;
 use cpsnarks_set::commitments::Commitment;
@@ -13,8 +15,6 @@ use cpsnarks_set::{
     transcript::modeq::{TranscriptVerifierChannel, TranscriptProverChannel}
 };
 use merlin::Transcript;
-
-use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let params = Parameters::from_security_level(128).unwrap();
@@ -31,8 +31,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let commitment1 = protocol.crs.integer_commitment_parameters.commit(&value1, &randomness1).unwrap();
     let commitment2 = protocol.crs.pedersen_commitment_parameters.commit(&value1, &randomness2).unwrap();
 
-    let mut proof_transcript = Transcript::new(b"modeq");
-    let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+    let proof_transcript = RefCell::new(Transcript::new(b"modeq"));
+    let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
         c_e: commitment1.clone(),
         c_e_q: commitment2.clone(),
@@ -43,13 +43,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         r_q: randomness2.clone(),
     }).unwrap();
 
-    let mut verification_transcript = Transcript::new(b"modeq");
-    let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &verifier_channel.proof().unwrap());
+    let verification_transcript = RefCell::new(Transcript::new(b"modeq"));
+    let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &verifier_channel.proof().unwrap());
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
     c.bench_function("modeq protocol", |b| b.iter(|| {
-        let mut proof_transcript = Transcript::new(b"modeq");
-        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        let proof_transcript = RefCell::new(Transcript::new(b"modeq"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         let statement = Statement {
             c_e: commitment1.clone(),
             c_e_q: commitment2.clone(),

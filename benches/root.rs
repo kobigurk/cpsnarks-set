@@ -1,5 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rug::Integer;
+use std::cell::RefCell;
 use algebra::bls12_381::{Bls12_381, G1Projective};
 use rand::thread_rng;
 use cpsnarks_set::commitments::Commitment;
@@ -45,8 +46,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let w = accum.1.witness.0.value;
     assert_eq!(Rsa2048::exp(&w, &value), acc);
 
-    let mut proof_transcript = Transcript::new(b"root");
-    let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+    let proof_transcript = RefCell::new(Transcript::new(b"root"));
+    let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
         c_e: commitment.clone(),
         acc: acc.clone(),
@@ -57,13 +58,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         w: w.clone(),
     }).unwrap();
 
-    let mut verification_transcript = Transcript::new(b"root");
-    let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &verifier_channel.proof().unwrap());
+    let verification_transcript = RefCell::new(Transcript::new(b"root"));
+    let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &verifier_channel.proof().unwrap());
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
     c.bench_function("root protocol", |b| b.iter(|| {
-        let mut proof_transcript = Transcript::new(b"root");
-        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        let proof_transcript = RefCell::new(Transcript::new(b"root"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         let statement = Statement {
             c_e: commitment.clone(),
             acc: acc.clone(),

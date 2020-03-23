@@ -40,3 +40,7 @@ harness = false
 [[bench]]
 name = "rsa"
 harness = false
+
+[[bench]]
+name = "membership"
+harness = false
