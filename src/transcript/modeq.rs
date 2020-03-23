@@ -1,4 +1,5 @@
 use merlin::Transcript;
+use std::cell::RefCell;
 use crate::{
     channels::{
         ChannelError,
@@ -25,13 +26,13 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> TranscriptProtoco
 }
 pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> {
     crs: CRSModEq<G, P>,
-    transcript: &'a mut T,
+    transcript: &'a RefCell<T>,
     message1: Option<Message1<G, P>>,
     message2: Option<Message2<P>>,
 }
 
 impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> TranscriptVerifierChannel<'a, G, P, T> {
-    pub fn new(crs: &CRSModEq<G, P>, transcript: &'a mut T) -> TranscriptVerifierChannel<'a, G, P, T> {
+    pub fn new(crs: &CRSModEq<G, P>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, P, T> {
         TranscriptVerifierChannel {
             crs: crs.clone(),
             transcript,
@@ -54,8 +55,10 @@ impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: Transcript
 
 impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> ModEqVerifierChannel<G, P> for TranscriptVerifierChannel<'a, G, P, T> {
     fn send_message1(&mut self, message: &Message1<G, P>) -> Result<(), ChannelError> {
-        self.transcript.append_integer_point(b"alpha1", &message.alpha1);
-        self.transcript.append_curve_point(b"alpha2", &message.alpha2);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.modeq_domain_sep();
+        transcript.append_integer_point(b"alpha1", &message.alpha1);
+        transcript.append_curve_point(b"alpha2", &message.alpha2);
         self.message1 = Some(message.clone());
         Ok(())
     }
@@ -64,18 +67,20 @@ impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: Transcript
         Ok(())
     }
     fn receive_challenge(&mut self) -> Result<Integer, ChannelError> {
-        Ok(self.transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.modeq_domain_sep();
+        Ok(transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
     }
 }
 
 pub struct TranscriptProverChannel<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> {
     crs: CRSModEq<G, P>,
-    transcript: &'a mut T,
+    transcript: &'a RefCell<T>,
     proof: Proof<G, P>,
 }
 
 impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> TranscriptProverChannel<'a, G, P, T> {
-    pub fn new(crs: &CRSModEq<G, P>, transcript: &'a mut T, proof: &Proof<G, P>) -> TranscriptProverChannel<'a, G, P, T> {
+    pub fn new(crs: &CRSModEq<G, P>, transcript: &'a RefCell<T>, proof: &Proof<G, P>) -> TranscriptProverChannel<'a, G, P, T> {
         TranscriptProverChannel {
             crs: crs.clone(),
             transcript,
@@ -86,14 +91,18 @@ impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: Transcript
 
 impl<'a, G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, T: TranscriptProtocolModEq<G, P>> ModEqProverChannel<G, P> for TranscriptProverChannel<'a, G, P, T> {
     fn receive_message1(&mut self) -> Result<Message1<G, P>, ChannelError> {
-        self.transcript.append_integer_point(b"alpha1", &self.proof.message1.alpha1);
-        self.transcript.append_curve_point(b"alpha2", &self.proof.message1.alpha2);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.modeq_domain_sep();
+        transcript.append_integer_point(b"alpha1", &self.proof.message1.alpha1);
+        transcript.append_curve_point(b"alpha2", &self.proof.message1.alpha2);
         Ok(self.proof.message1.clone())
     }
     fn receive_message2(&mut self) -> Result<Message2<P>, ChannelError> {
         Ok(self.proof.message2.clone())
     }
     fn generate_and_send_challenge(&mut self) -> Result<Integer, ChannelError> {
-        Ok(self.transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.modeq_domain_sep();
+        Ok(transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
     }
 }

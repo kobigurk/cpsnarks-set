@@ -1,4 +1,5 @@
 use merlin::Transcript;
+use std::cell::RefCell;
 use rug::Integer;
 use crate::{
     channels::{
@@ -23,14 +24,14 @@ impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolRoot<G> for Transcript {
 
 pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> {
     crs: CRSRoot<G>,
-    transcript: &'a mut T,
+    transcript: &'a RefCell<T>,
     message1: Option<Message1<G>>,
     message2: Option<Message2<G>>,
     message3: Option<Message3>,
 }
 
 impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> TranscriptVerifierChannel<'a, G, T> {
-    pub fn new(crs: &CRSRoot<G>, transcript: &'a mut T) -> TranscriptVerifierChannel<'a, G, T> {
+    pub fn new(crs: &CRSRoot<G>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, T> {
         TranscriptVerifierChannel {
             crs: crs.clone(),
             transcript,
@@ -55,16 +56,20 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> Transcri
 
 impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootVerifierChannel<G> for TranscriptVerifierChannel<'a, G, T> {
     fn send_message1(&mut self, message: &Message1<G>) -> Result<(), ChannelError> {
-        self.transcript.append_integer_point(b"c_w", &message.c_w);
-        self.transcript.append_integer_point(b"c_r", &message.c_r);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        transcript.append_integer_point(b"c_w", &message.c_w);
+        transcript.append_integer_point(b"c_r", &message.c_r);
         self.message1 = Some(message.clone());
         Ok(())
     }
     fn send_message2(&mut self, message: &Message2<G>) -> Result<(), ChannelError> {
-        self.transcript.append_integer_point(b"alpha1", &message.alpha1);
-        self.transcript.append_integer_point(b"alpha2", &message.alpha2);
-        self.transcript.append_integer_point(b"alpha3", &message.alpha3);
-        self.transcript.append_integer_point(b"alpha4", &message.alpha4);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        transcript.append_integer_point(b"alpha1", &message.alpha1);
+        transcript.append_integer_point(b"alpha2", &message.alpha2);
+        transcript.append_integer_point(b"alpha3", &message.alpha3);
+        transcript.append_integer_point(b"alpha4", &message.alpha4);
         self.message2 = Some(message.clone());
         Ok(())
     }
@@ -73,18 +78,20 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootVeri
         Ok(())
     }
     fn receive_challenge(&mut self) -> Result<Integer, ChannelError> {
-        Ok(self.transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        Ok(transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
     }
 }
 
 pub struct TranscriptProverChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> {
     crs: CRSRoot<G>,
-    transcript: &'a mut T,
+    transcript: &'a RefCell<T>,
     proof: Proof<G>,
 }
 
 impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> TranscriptProverChannel<'a, G, T> {
-    pub fn new(crs: &CRSRoot<G>, transcript: &'a mut T, proof: &Proof<G>) -> TranscriptProverChannel<'a, G, T> {
+    pub fn new(crs: &CRSRoot<G>, transcript: &'a RefCell<T>, proof: &Proof<G>) -> TranscriptProverChannel<'a, G, T> {
         TranscriptProverChannel {
             crs: crs.clone(),
             transcript,
@@ -95,15 +102,19 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> Transcri
 
 impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootProverChannel<G> for TranscriptProverChannel<'a, G, T> {
     fn receive_message1(&mut self) -> Result<Message1<G>, ChannelError> {
-        self.transcript.append_integer_point(b"c_w", &self.proof.message1.c_w);
-        self.transcript.append_integer_point(b"c_r", &self.proof.message1.c_r);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        transcript.append_integer_point(b"c_w", &self.proof.message1.c_w);
+        transcript.append_integer_point(b"c_r", &self.proof.message1.c_r);
         Ok(self.proof.message1.clone())
     }
     fn receive_message2(&mut self) -> Result<Message2<G>, ChannelError> {
-        self.transcript.append_integer_point(b"alpha1", &self.proof.message2.alpha1);
-        self.transcript.append_integer_point(b"alpha2", &self.proof.message2.alpha2);
-        self.transcript.append_integer_point(b"alpha3", &self.proof.message2.alpha3);
-        self.transcript.append_integer_point(b"alpha4", &self.proof.message2.alpha4);
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        transcript.append_integer_point(b"alpha1", &self.proof.message2.alpha1);
+        transcript.append_integer_point(b"alpha2", &self.proof.message2.alpha2);
+        transcript.append_integer_point(b"alpha3", &self.proof.message2.alpha3);
+        transcript.append_integer_point(b"alpha4", &self.proof.message2.alpha4);
 
         Ok(self.proof.message2.clone())
     }
@@ -111,6 +122,8 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootProv
         Ok(self.proof.message3.clone())
     }
     fn generate_and_send_challenge(&mut self) -> Result<Integer, ChannelError> {
-        Ok(self.transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
+        let mut transcript = self.transcript.try_borrow_mut()?;
+        transcript.root_domain_sep();
+        Ok(transcript.challenge_scalar(b"c", self.crs.parameters.security_soundness))
     }
 }

@@ -9,10 +9,12 @@ use rug::integer::Order;
 pub mod root;
 pub mod modeq;
 pub mod range;
+pub mod membership;
 
 pub use root::TranscriptProtocolRoot;
 pub use modeq::TranscriptProtocolModEq;
 pub use range::TranscriptProtocolRange;
+pub use membership::TranscriptProtocolMembership;
 
 quick_error! {
     #[derive(Debug)]

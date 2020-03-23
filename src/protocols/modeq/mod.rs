@@ -151,6 +151,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
 #[cfg(all(test, feature="zexe"))]
 mod test {
     use rug::Integer;
+    use std::cell::RefCell;
     use algebra::bls12_381::{Bls12_381, G1Projective};
     use rand::thread_rng;
     use crate::{
@@ -180,12 +181,12 @@ mod test {
         let commitment1 = protocol.crs.integer_commitment_parameters.commit(&value1, &randomness1).unwrap();
         let commitment2 = protocol.crs.pedersen_commitment_parameters.commit(&value1, &randomness2).unwrap();
 
-        let mut proof_transcript = Transcript::new(b"modeq");
+        let proof_transcript = RefCell::new(Transcript::new(b"modeq"));
         let statement = Statement {
             c_e: commitment1,
             c_e_q: commitment2,
         };
-        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         protocol.prove(&mut verifier_channel, &mut rng1, &mut rng2, &statement, &Witness {
             e: value1,
             r: randomness1,
@@ -194,8 +195,8 @@ mod test {
 
         let proof = verifier_channel.proof().unwrap();
 
-        let mut verification_transcript = Transcript::new(b"modeq");
-        let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &proof);
+        let verification_transcript = RefCell::new(Transcript::new(b"modeq"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 }

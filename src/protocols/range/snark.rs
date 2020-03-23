@@ -111,6 +111,7 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
 #[cfg(test)]
 mod test {
     use rug::Integer;
+    use std::cell::RefCell;
     use algebra::bls12_381::{Bls12_381, G1Projective, Fr};
     use r1cs_std::test_constraint_system::TestConstraintSystem;
     use r1cs_core::ConstraintSynthesizer;
@@ -157,15 +158,15 @@ mod test {
                 2,
                 (crs.parameters.hash_to_prime_bits)
                     as u32,
-            )) - &Integer::from(5);
+            )) - &Integer::from(245);
         let randomness = Integer::from(9);
         let commitment = protocol.crs.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
 
-        let mut proof_transcript = Transcript::new(b"range");
+        let proof_transcript = RefCell::new(Transcript::new(b"range"));
         let statement = Statement {
             c_e_q: commitment,
         };
-        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         protocol.prove(&mut verifier_channel, &mut rng2, &statement, &Witness {
             e: value,
             r_q: randomness,
@@ -173,8 +174,8 @@ mod test {
 
         let proof = verifier_channel.proof().unwrap();
 
-        let mut verification_transcript = Transcript::new(b"modeq");
-        let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &proof);
+        let verification_transcript = RefCell::new(Transcript::new(b"modeq"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 }

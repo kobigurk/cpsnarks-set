@@ -1,4 +1,5 @@
 use merlin::Transcript;
+use std::cell::RefCell;
 use crate::{
     channels::{
         ChannelError,
@@ -23,11 +24,11 @@ impl<P: CurvePointProjective> TranscriptProtocolRange<P> for Transcript {
 pub struct TranscriptVerifierChannel<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
     proof: Option<RP::Proof>,
     crs_type: std::marker::PhantomData<CRSRangeProof<P, RP>>,
-    transcript_type: std::marker::PhantomData<&'a mut T>,
+    transcript_type: std::marker::PhantomData<&'a RefCell<T>>,
 }
 
 impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptVerifierChannel<'a, P, RP, T> {
-    pub fn new(_: &CRSRangeProof<P, RP>, _: &'a mut T) -> TranscriptVerifierChannel<'a, P, RP, T> {
+    pub fn new(_: &CRSRangeProof<P, RP>, _: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, P, RP, T> {
         TranscriptVerifierChannel {
             proof: None,
             crs_type: std::marker::PhantomData,
@@ -54,11 +55,11 @@ impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtoc
 pub struct TranscriptProverChannel<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> {
     proof: RP::Proof,
     crs_type: std::marker::PhantomData<CRSRangeProof<P, RP>>,
-    transcript_type: std::marker::PhantomData<&'a mut T>,
+    transcript_type: std::marker::PhantomData<&'a RefCell<T>>,
 }
 
 impl<'a, P: CurvePointProjective, RP: RangeProofProtocol<P>, T: TranscriptProtocolRange<P>> TranscriptProverChannel<'a, P, RP, T> {
-    pub fn new(_: &CRSRangeProof<P, RP>, _: &'a mut T, proof: &RP::Proof) -> TranscriptProverChannel<'a, P, RP, T> {
+    pub fn new(_: &CRSRangeProof<P, RP>, _: &'a RefCell<T>, proof: &RP::Proof) -> TranscriptProverChannel<'a, P, RP, T> {
         TranscriptProverChannel {
             proof: proof.clone(),
             crs_type: std::marker::PhantomData,

@@ -225,6 +225,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
 #[cfg(all(test, feature="zexe"))]
 mod test {
     use rug::Integer;
+    use std::cell::RefCell;
     use algebra::bls12_381::{Bls12_381, G1Projective};
     use rand::thread_rng;
     use crate::{
@@ -234,10 +235,9 @@ mod test {
         protocols::range::snark::Protocol as RPProtocol,
     };
     use rug::rand::RandState;
-    use accumulator::group::{Group, Rsa2048};
     use super::{Protocol, Statement, Witness};
     use merlin::Transcript;
-    use accumulator::AccumulatorWithoutHashToPrime;
+    use accumulator::{AccumulatorWithoutHashToPrime, group::{Group, Rsa2048}};
 
     const LARGE_PRIMES: [u64; 4] = [
         553_525_575_239_331_913,
@@ -268,8 +268,8 @@ mod test {
         let w = accum.1.witness.0.value;
         assert_eq!(Rsa2048::exp(&w, &value), acc);
 
-        let mut proof_transcript = Transcript::new(b"root");
-        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &mut proof_transcript);
+        let proof_transcript = RefCell::new(Transcript::new(b"root"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         let statement = Statement {
             c_e: commitment,
             acc,
@@ -281,8 +281,8 @@ mod test {
         }).unwrap();
 
         let proof = verifier_channel.proof().unwrap();
-        let mut verification_transcript = Transcript::new(b"root");
-        let mut prover_channel = TranscriptProverChannel::new(&crs, &mut verification_transcript, &proof);
+        let verification_transcript = RefCell::new(Transcript::new(b"root"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 
