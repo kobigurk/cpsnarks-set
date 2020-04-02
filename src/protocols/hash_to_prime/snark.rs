@@ -1,5 +1,5 @@
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use algebra_core::{PrimeField, PairingEngine, UniformRand};
+use algebra_core::{PrimeField, PairingEngine, UniformRand, AffineCurve};
 use r1cs_std::{
     Assignment,
     boolean::Boolean,
@@ -19,6 +19,7 @@ use crate::{
     }
 };
 use rand::Rng;
+use std::ops::Sub;
 
 pub struct HashToPrimeCircuit<E: PairingEngine> {
     required_bit_size: u16,
@@ -88,12 +89,16 @@ impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
     fn verify<C: HashToPrimeProverChannel<E::G1Projective, Self>> (
         &self,
         prover_channel: &mut C,
-        _statement: &Statement<E::G1Projective>,
+        statement: &Statement<E::G1Projective>,
     ) -> Result<(), VerificationError>
     {
         let proof = prover_channel.receive_proof()?;
         let pvk = legogro16::prepare_verifying_key(&self.crs.hash_to_prime_parameters.vk);
         if !legogro16::verify_proof(&pvk, &proof)? {
+            return Err(VerificationError::VerificationFailed);
+        }
+        let proof_link_d_without_one = proof.link_d.into_projective().sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0]);
+        if statement.c_e_q != proof_link_d_without_one {
             return Err(VerificationError::VerificationFailed);
         }
 
@@ -167,7 +172,7 @@ mod test {
 
         let proof = verifier_channel.proof().unwrap();
 
-        let verification_transcript = RefCell::new(Transcript::new(b"modeq"));
+        let verification_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
         let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }

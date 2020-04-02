@@ -73,3 +73,14 @@ pub struct Witness {
     pub r_q: Integer,
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum HashToPrimeError {
+        CouldNotFindIndex {}
+        ValueTooBig {}
+        IntegerError(num: Integer) {
+            from()
+        }
+    }
+}
+

@@ -18,6 +18,9 @@ crypto-primitives = { path = "../zexe/crypto-primitives", features = ["r1cs"]}
 legogro16 = { path = "../zexe/legogro16" }
 curve25519-dalek = { version = "2" }
 bulletproofs = { version = "2", optional = true }
+digest = "0.7.6"
+blake2 = "0.7.1"
+hex = "0.4.2"
 
 [features]
 dalek = ["bulletproofs"]

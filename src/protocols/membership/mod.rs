@@ -7,7 +7,7 @@ use crate::{
     protocols::{
         root::{CRSRoot, Protocol as RootProtocol, Statement as RootStatement, Witness as RootWitness, Proof as RootProof},
         modeq::{CRSModEq, Protocol as ModEqProtocol, Statement as ModEqStatement, Witness as ModEqWitness, Proof as ModEqProof},
-        hash_to_prime::{CRSHashToPrime, HashToPrimeProtocol, Statement as HashToPrimeStatement, Witness as HashToPrimeWitness},
+        hash_to_prime::{CRSHashToPrime, HashToPrimeProtocol, Statement as HashToPrimeStatement, Witness as HashToPrimeWitness, HashToPrimeError},
     },
     channels::{membership::*, root::*, modeq::*, hash_to_prime::*, ChannelError},
     utils::{curve::CurvePointProjective, random_between},
@@ -41,6 +41,9 @@ quick_error! {
             from()
         }
         VerifierChannelError(err: ChannelError) {
+            from()
+        }
+        PrimeError(err: HashToPrimeError) {
             from()
         }
     }

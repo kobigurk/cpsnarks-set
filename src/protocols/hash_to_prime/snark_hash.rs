@@ -1,5 +1,5 @@
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use algebra_core::{PrimeField, PairingEngine, UniformRand, BigInteger, log2};
+use algebra_core::{PrimeField, PairingEngine, UniformRand, BigInteger, log2, One, AffineCurve};
 use r1cs_std::{
     Assignment,
     boolean::Boolean,
@@ -13,13 +13,20 @@ use crate::{
     parameters::Parameters,
     commitments::pedersen::PedersenCommitment,
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-    utils::{integer_to_bigint_mod_q},
+    utils::{integer_to_bigint_mod_q, bigint_to_integer, bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian},
     protocols::{
-        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness},
+        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness, HashToPrimeError},
         membership::{SetupError, ProofError, VerificationError},
     }
 };
 use rand::Rng;
+use rug::{
+    Integer,
+    integer::IsPrime,
+};
+use blake2::Blake2s;
+use digest::{FixedOutput, Input};
+use std::ops::{Neg, Sub};
 
 pub trait HashToPrimeHashParameters {
     const MESSAGE_SIZE: u16;
@@ -27,6 +34,62 @@ pub trait HashToPrimeHashParameters {
     fn index_bit_length(security_level: u16) -> u64 {
         log2((security_level as usize)*(Self::MESSAGE_SIZE as usize)) as u64
     }
+}
+
+
+fn hash_to_prime<E: PairingEngine, P: HashToPrimeHashParameters>(security_level: u16, required_bits: u16, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
+    let index_bit_length = P::index_bit_length(security_level);
+    let value = integer_to_bigint_mod_q::<E::G1Projective>(e)?;
+    let bigint_bits = 64*((E::Fr::one().neg().into_repr().num_bits() + 63)/64);
+    let bits_to_skip =  bigint_bits as usize - P::MESSAGE_SIZE as usize;
+    let value_raw_bits = value.into_repr().to_bits();
+    for b in &value_raw_bits[..bits_to_skip] {
+        if *b != false {
+            return Err(HashToPrimeError::ValueTooBig);
+        }
+    }
+    let mut value_bits = value_raw_bits[bits_to_skip..].to_vec();
+    if value_bits.len() < P::MESSAGE_SIZE as usize {
+        value_bits = [vec![false; P::MESSAGE_SIZE as usize - value_bits.len()], value_bits].concat();
+    }
+    for index in 0..1<<index_bit_length {
+        let mut index_bits = vec![];
+        for i in 0..index_bit_length {
+            let mask = 1u64 << i;
+            let bit = mask & index == mask;
+            index_bits.push(bit);
+        }
+        let bits_to_hash  = [index_bits.as_slice(), &value_bits].concat();
+        let bits_to_hash_padded = if bits_to_hash.len() % 8 != 0 {
+            let padding_length = 8 - bits_to_hash.len() % 8;
+            [&vec![false; padding_length][..], bits_to_hash.as_slice()].concat()
+        } else {
+            bits_to_hash
+        };
+        let bits_big_endian = bits_to_hash_padded.into_iter().rev().collect::<Vec<_>>();
+        let bytes_to_hash = bits_big_endian_to_bytes_big_endian(&bits_big_endian).into_iter().rev().collect::<Vec<_>>();
+        let mut hasher = Blake2s::new_keyed(&[], 32);
+        hasher.process(&bytes_to_hash);
+        let hash = hasher.fixed_result();
+        let hash_big_endian = hash.into_iter().rev().collect::<Vec<_>>();
+        let hash_bits = [
+            vec![true].as_slice(),
+            bytes_big_endian_to_bits_big_endian(&hash_big_endian).into_iter().rev().take(required_bits as usize - 1).collect::<Vec<_>>().as_slice(),
+        ].concat();
+
+        let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(&hash_bits));
+        let integer = bigint_to_integer::<E::G1Projective>(&element);
+        // TODO: confirm repititions
+        let is_prime = integer.is_probably_prime(100);
+        if is_prime == IsPrime::No {
+            continue;
+        }
+
+        return Ok((integer, index));
+    }
+
+    Err(HashToPrimeError::CouldNotFindIndex)
+       
 }
 
 pub struct HashToPrimeHashCircuit<E: PairingEngine, P: HashToPrimeHashParameters> {
@@ -70,15 +133,17 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> ConstraintSynthesizer<E::Fr
         } else {
             bits_to_hash
         };
+
         let hash_result = blake2s_gadget(cs.ns(|| "blake2s hash"), &bits_to_hash_padded)?;
         let hash_bits = hash_result
             .into_iter()
             .map(|n| n.to_bits_le())
             .flatten()
-            .take((self.required_bit_size - 1) as usize)
             .collect::<Vec<Boolean>>();
+
+        let hash_bits = hash_bits.into_iter().take((self.required_bit_size - 1) as usize).collect::<Vec<_>>();
         let hash_bits = [&[Boolean::constant(true)][..], &hash_bits].concat();
-        let result = FpGadget::alloc_input(cs.ns( || "alloc hash"),|| {
+        let result = FpGadget::alloc_input(cs.ns( || "prime"),|| {
             if hash_bits.iter().any(|x| x.get_value().is_none()) {
                 Err(SynthesisError::AssignmentMissing)
             } else {
@@ -136,11 +201,12 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         witness: &Witness,
     ) -> Result<(), ProofError>
     {
+        let (_, index) = hash_to_prime::<E, P>(self.crs.parameters.security_level, self.crs.parameters.hash_to_prime_bits, &witness.e)?;
         let c = HashToPrimeHashCircuit::<E, P> {
             security_level: self.crs.parameters.security_level,
             required_bit_size: self.crs.parameters.hash_to_prime_bits,
             value: Some(integer_to_bigint_mod_q::<E::G1Projective>(&witness.e.clone())?),
-            index: Some(0),
+            index: Some(index),
             parameters_type: std::marker::PhantomData,
         };
         let v = E::Fr::rand(rng);
@@ -153,12 +219,16 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
     fn verify<C: HashToPrimeProverChannel<E::G1Projective, Self>> (
         &self,
         prover_channel: &mut C,
-        _statement: &Statement<E::G1Projective>,
+        statement: &Statement<E::G1Projective>,
     ) -> Result<(), VerificationError>
     {
         let proof = prover_channel.receive_proof()?;
         let pvk = legogro16::prepare_verifying_key(&self.crs.hash_to_prime_parameters.vk);
         if !legogro16::verify_proof(&pvk, &proof)? {
+            return Err(VerificationError::VerificationFailed);
+        } 
+        let proof_link_d_without_one = proof.link_d.into_projective().sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0]);
+        if statement.c_e_q != proof_link_d_without_one {
             return Err(VerificationError::VerificationFailed);
         }
 
@@ -182,32 +252,37 @@ mod test {
             HashToPrimeProtocol,
             snark_hash::Protocol as HPProtocol,
         },
-        utils::integer_to_bigint_mod_q,
+        utils::{integer_to_bigint_mod_q, bigint_to_integer},
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
-    use super::{Protocol, Statement, Witness, HashToPrimeHashCircuit, HashToPrimeHashParameters};
+    use super::{Protocol, Statement, Witness, HashToPrimeHashCircuit, HashToPrimeHashParameters, hash_to_prime};
     use merlin::Transcript;
 
     struct TestParameters {}
     impl HashToPrimeHashParameters for TestParameters {
-        const MESSAGE_SIZE: u16 = 16;
+        const MESSAGE_SIZE: u16 = 254;
     }
 
     #[test]
     fn test_circuit() {
         let mut cs = TestConstraintSystem::<Fr>::new();
+        let security_level = 64;
+        let required_bits = 254;
+        let value = Integer::from(12);
+        let (prime, index) = hash_to_prime::<Bls12_381, TestParameters>(security_level, required_bits, &value).unwrap();
         let c = HashToPrimeHashCircuit::<Bls12_381, TestParameters> {
-            security_level: 64,
-            required_bit_size: 254,
-            value: Some(integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12)).unwrap().into()),
-            index: Some(10),
+            security_level: security_level,
+            required_bit_size: required_bits,
+            value: Some(integer_to_bigint_mod_q::<G1Projective>(&value).unwrap().into()),
+            index: Some(index),
             parameters_type: std::marker::PhantomData,
         };
         c.generate_constraints(&mut cs).unwrap();
         if !cs.is_satisfied() {
             panic!(format!("not satisfied: {}", cs.which_is_unsatisfied().unwrap()));
         }
+        assert_eq!(prime, bigint_to_integer::<G1Projective>(&cs.get("prime/alloc")));
     }
 
     #[test]
@@ -220,13 +295,10 @@ mod test {
         let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381, TestParameters>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
         let protocol = Protocol::<Bls12_381, TestParameters>::from_crs(&crs);
 
-        let value = Integer::from(Integer::u_pow_u(
-                2,
-                (crs.parameters.hash_to_prime_bits)
-                    as u32,
-            )) - &Integer::from(245);
+        let value = Integer::from(13);
+        let (hashed_value, _) = hash_to_prime::<Bls12_381, TestParameters>(crs.parameters.security_level, crs.parameters.hash_to_prime_bits, &value).unwrap();
         let randomness = Integer::from(9);
-        let commitment = protocol.crs.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
+        let commitment = protocol.crs.pedersen_commitment_parameters.commit(&hashed_value, &randomness).unwrap();
 
         let proof_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
         let statement = Statement {
@@ -240,7 +312,7 @@ mod test {
 
         let proof = verifier_channel.proof().unwrap();
 
-        let verification_transcript = RefCell::new(Transcript::new(b"modeq"));
+        let verification_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
         let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
