@@ -1,12 +1,12 @@
 use crate::{
     channels::ChannelError,
-    protocols::range::RangeProofProtocol,
+    protocols::hash_to_prime::HashToPrimeProtocol,
     utils::curve::CurvePointProjective,
 };
-pub trait RangeVerifierChannel<P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub trait HashToPrimeVerifierChannel<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     fn send_proof(&mut self, proof: &RP::Proof) -> Result<(), ChannelError>;
 }
 
-pub trait RangeProverChannel<P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub trait HashToPrimeProverChannel<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     fn receive_proof(&mut self) -> Result<RP::Proof, ChannelError>;
 }

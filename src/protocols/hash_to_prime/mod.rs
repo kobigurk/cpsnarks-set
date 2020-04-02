@@ -1,7 +1,7 @@
 use rand::{RngCore, CryptoRng};
 use crate::{
     parameters::Parameters,
-    channels::range::{RangeProverChannel, RangeVerifierChannel},
+    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     protocols::membership::{SetupError, ProofError, VerificationError},
     commitments::{
         Commitment,
@@ -13,22 +13,24 @@ use rug::Integer;
 
 #[cfg(feature = "zexe")]
 pub mod snark;
+#[cfg(feature = "zexe")]
+pub mod snark_hash;
 
 #[cfg(feature = "dalek")]
 pub mod bp;
 
-pub trait RangeProofProtocol<P: CurvePointProjective> {
+pub trait HashToPrimeProtocol<P: CurvePointProjective> {
     type Proof: Clone;
     type Parameters: Clone;
 
     fn from_crs(
-        crs: &CRSRangeProof<P, Self>
+        crs: &CRSHashToPrime<P, Self>
     ) -> Self
     where Self : Sized;
 
     fn setup<R: RngCore + CryptoRng>(rng: &mut R, pedersen_commitment_parameters: &PedersenCommitment<P>, parameters: &Parameters) -> Result<Self::Parameters, SetupError>;
 
-    fn prove<R: RngCore + CryptoRng, C: RangeVerifierChannel<P, Self>> (
+    fn prove<R: RngCore + CryptoRng, C: HashToPrimeVerifierChannel<P, Self>> (
         &self,
         verifier_channel: &mut C,
         rng: &mut R,
@@ -37,7 +39,7 @@ pub trait RangeProofProtocol<P: CurvePointProjective> {
     ) -> Result<(), ProofError>
         where
             Self: Sized;
-    fn verify<C: RangeProverChannel<P, Self>>(
+    fn verify<C: HashToPrimeProverChannel<P, Self>>(
         &self,
         prover_channel: &mut C,
         statement: &Statement<P>,
@@ -46,18 +48,18 @@ pub trait RangeProofProtocol<P: CurvePointProjective> {
             Self: Sized;
 }
 
-pub struct CRSRangeProof<P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub struct CRSHashToPrime<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     pub parameters: Parameters,
     pub pedersen_commitment_parameters: PedersenCommitment<P>,
-    pub range_proof_parameters: RP::Parameters,
+    pub hash_to_prime_parameters: RP::Parameters,
 }
 
-impl<P: CurvePointProjective, RP: RangeProofProtocol<P>> Clone for CRSRangeProof<P, RP> {
+impl<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> Clone for CRSHashToPrime<P, RP> {
     fn clone(&self) -> Self {
         Self {
             parameters: self.parameters.clone(),
             pedersen_commitment_parameters: self.pedersen_commitment_parameters.clone(),
-            range_proof_parameters: self.range_proof_parameters.clone(),
+            hash_to_prime_parameters: self.hash_to_prime_parameters.clone(),
         }
     }
 }

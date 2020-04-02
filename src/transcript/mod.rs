@@ -8,12 +8,12 @@ use rug::integer::Order;
 
 pub mod root;
 pub mod modeq;
-pub mod range;
+pub mod hash_to_prime;
 pub mod membership;
 
 pub use root::TranscriptProtocolRoot;
 pub use modeq::TranscriptProtocolModEq;
-pub use range::TranscriptProtocolRange;
+pub use hash_to_prime::TranscriptProtocolHashToPrime;
 pub use membership::TranscriptProtocolMembership;
 
 quick_error! {
@@ -25,7 +25,7 @@ quick_error! {
 
 
 pub trait TranscriptProtocolMembershipPrime<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective>:
-    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolRange<P> {
+    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P> {
 
 }
 

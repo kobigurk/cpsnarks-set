@@ -9,7 +9,7 @@ use cpsnarks_set::{
     transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
     protocols::{
         membership::{Protocol, Statement, Witness},
-        range::snark::Protocol as RPProtocol,
+        hash_to_prime::snark::Protocol as RPProtocol,
     },
 };
 use rug::rand::RandState;

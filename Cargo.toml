@@ -14,6 +14,7 @@ merlin = "2.0.0"
 rand = { version = "0.7" }
 r1cs-core = { path = "../zexe/r1cs-core" }
 r1cs-std = { path = "../zexe/r1cs-std" }
+crypto-primitives = { path = "../zexe/crypto-primitives", features = ["r1cs"]}
 legogro16 = { path = "../zexe/legogro16" }
 curve25519-dalek = { version = "2" }
 bulletproofs = { version = "2", optional = true }

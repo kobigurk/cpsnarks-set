@@ -11,21 +11,21 @@ use r1cs_std::{
 use crate::{
     parameters::Parameters,
     commitments::pedersen::PedersenCommitment,
-    channels::range::{RangeProverChannel, RangeVerifierChannel},
+    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     utils::{integer_to_bigint_mod_q},
     protocols::{
-        range::{RangeProofProtocol, CRSRangeProof, Statement, Witness},
+        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness},
         membership::{SetupError, ProofError, VerificationError},
     }
 };
 use rand::Rng;
 
-pub struct RangeProofCircuit<E: PairingEngine> {
+pub struct HashToPrimeCircuit<E: PairingEngine> {
     required_bit_size: u16,
     value: Option<E::Fr>,
 }
 
-impl<E: PairingEngine> ConstraintSynthesizer<E::Fr>  for RangeProofCircuit<E> {
+impl<E: PairingEngine> ConstraintSynthesizer<E::Fr>  for HashToPrimeCircuit<E> {
     fn generate_constraints<CS: ConstraintSystem<E::Fr>>(
         self,
         cs: &mut CS,
@@ -36,27 +36,20 @@ impl<E: PairingEngine> ConstraintSynthesizer<E::Fr>  for RangeProofCircuit<E> {
         let modulus_bits = E::Fr::size_in_bits();
         bits[modulus_bits - self.required_bit_size as usize].enforce_equal(cs.ns(|| "enforce highest required bit is zero"), &Boolean::constant(true))?;
 
-        let bits_not = bits[modulus_bits - self.required_bit_size as usize + 1..].into_iter().map(|b| b.not()).collect::<Vec<_>>();
-        let anded = Boolean::kary_and(cs.ns(|| "and all negated bits"), &bits_not)?;
-
-        // We want at least one of the original bits to be 1. This means that at least one of the negated bits should have been 0,
-        // and so result in a 0.
-        anded.enforce_equal(cs.ns(|| "check at least one 0"), &Boolean::constant(false))?;
-
         Ok(())
     }
 }
 
 pub struct Protocol<E: PairingEngine> {
-    pub crs: CRSRangeProof<E::G1Projective, Self>,
+    pub crs: CRSHashToPrime<E::G1Projective, Self>,
 }
 
-impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
+impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
     type Proof = legogro16::Proof<E>;
     type Parameters = legogro16::Parameters<E>;
 
     fn from_crs(
-        crs: &CRSRangeProof<E::G1Projective, Self>
+        crs: &CRSHashToPrime<E::G1Projective, Self>
     ) -> Protocol<E> {
         Protocol {
             crs: (*crs).clone(),
@@ -64,7 +57,7 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
     }
 
     fn setup<R: Rng>(rng: &mut R, pedersen_commitment_parameters: &PedersenCommitment<E::G1Projective>, parameters: &Parameters) -> Result<Self::Parameters, SetupError> {
-        let c = RangeProofCircuit::<E> {
+        let c = HashToPrimeCircuit::<E> {
             required_bit_size: parameters.hash_to_prime_bits,
             value: None,
         };
@@ -73,7 +66,7 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
         Ok(legogro16::generate_random_parameters(c, &pedersen_bases, rng)?)
     }
 
-    fn prove<R: Rng, C: RangeVerifierChannel<E::G1Projective, Self>>(
+    fn prove<R: Rng, C: HashToPrimeVerifierChannel<E::G1Projective, Self>>(
         &self,
         verifier_channel: &mut C,
         rng: &mut R,
@@ -81,25 +74,25 @@ impl<E: PairingEngine> RangeProofProtocol<E::G1Projective> for Protocol<E> {
         witness: &Witness,
     ) -> Result<(), ProofError>
     {
-        let c = RangeProofCircuit::<E> {
+        let c = HashToPrimeCircuit::<E> {
             required_bit_size: self.crs.parameters.hash_to_prime_bits,
             value: Some(integer_to_bigint_mod_q::<E::G1Projective>(&witness.e.clone())?),
         };
         let v = E::Fr::rand(rng);
         let link_v = integer_to_bigint_mod_q::<E::G1Projective>(&witness.r_q.clone())?;
-        let proof = legogro16::create_random_proof::<E, _, _>(c, v, link_v, &self.crs.range_proof_parameters, rng)?;
+        let proof = legogro16::create_random_proof::<E, _, _>(c, v, link_v, &self.crs.hash_to_prime_parameters, rng)?;
         verifier_channel.send_proof(&proof)?;
         Ok(())
     }
 
-    fn verify<C: RangeProverChannel<E::G1Projective, Self>> (
+    fn verify<C: HashToPrimeProverChannel<E::G1Projective, Self>> (
         &self,
         prover_channel: &mut C,
         _statement: &Statement<E::G1Projective>,
     ) -> Result<(), VerificationError>
     {
         let proof = prover_channel.receive_proof()?;
-        let pvk = legogro16::prepare_verifying_key(&self.crs.range_proof_parameters.vk);
+        let pvk = legogro16::prepare_verifying_key(&self.crs.hash_to_prime_parameters.vk);
         if !legogro16::verify_proof(&pvk, &proof)? {
             return Err(VerificationError::VerificationFailed);
         }
@@ -119,22 +112,22 @@ mod test {
     use crate::{
         parameters::Parameters,
         commitments::Commitment,
-        transcript::range::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::range::{
-            RangeProofProtocol,
+        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::{
+            HashToPrimeProtocol,
             snark::Protocol as RPProtocol,
         },
         utils::integer_to_bigint_mod_q,
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
-    use super::{Protocol, Statement, Witness, RangeProofCircuit};
+    use super::{Protocol, Statement, Witness, HashToPrimeCircuit};
     use merlin::Transcript;
 
     #[test]
     fn test_circuit() {
         let mut cs = TestConstraintSystem::<Fr>::new();
-        let c = RangeProofCircuit::<Bls12_381> {
+        let c = HashToPrimeCircuit::<Bls12_381> {
             required_bit_size: 4,
             value: Some(integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12)).unwrap().into()),
         };
@@ -151,7 +144,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_range;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
         let protocol = Protocol::<Bls12_381>::from_crs(&crs);
 
         let value = Integer::from(Integer::u_pow_u(
@@ -162,7 +155,7 @@ mod test {
         let randomness = Integer::from(9);
         let commitment = protocol.crs.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
 
-        let proof_transcript = RefCell::new(Transcript::new(b"range"));
+        let proof_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
         let statement = Statement {
             c_e_q: commitment,
         };

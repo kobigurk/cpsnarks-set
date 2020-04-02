@@ -1,6 +1,6 @@
 pub mod root;
 pub mod modeq;
-pub mod range;
+pub mod hash_to_prime;
 pub mod membership;
 
 use std::cell::{BorrowError, BorrowMutError};

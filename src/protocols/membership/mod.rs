@@ -7,9 +7,9 @@ use crate::{
     protocols::{
         root::{CRSRoot, Protocol as RootProtocol, Statement as RootStatement, Witness as RootWitness, Proof as RootProof},
         modeq::{CRSModEq, Protocol as ModEqProtocol, Statement as ModEqStatement, Witness as ModEqWitness, Proof as ModEqProof},
-        range::{CRSRangeProof, RangeProofProtocol, Statement as RangeProofStatement, Witness as RangeProofWitness},
+        hash_to_prime::{CRSHashToPrime, HashToPrimeProtocol, Statement as HashToPrimeStatement, Witness as HashToPrimeWitness},
     },
-    channels::{membership::*, root::*, modeq::*, range::*, ChannelError},
+    channels::{membership::*, root::*, modeq::*, hash_to_prime::*, ChannelError},
     utils::{curve::CurvePointProjective, random_between},
 };
 use rug::rand::MutRandState;
@@ -65,31 +65,31 @@ quick_error! {
     }
 }
 
-pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     // G contains the information about Z^*_N
     pub parameters: Parameters,
     pub crs_root: CRSRoot<G>,
     pub crs_modeq: CRSModEq<G, P>,
-    pub crs_range: CRSRangeProof<P, RP>,
+    pub crs_hash_to_prime: CRSHashToPrime<P, RP>,
 }
 
 impl<
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: RangeProofProtocol<P>
+    RP: HashToPrimeProtocol<P>
  > Clone for CRS<G, P, RP> {
     fn clone(&self) -> Self {
         Self {
             parameters: self.parameters.clone(),
             crs_root: self.crs_root.clone(),
             crs_modeq: self.crs_modeq.clone(),
-            crs_range: self.crs_range.clone(),
+            crs_hash_to_prime: self.crs_hash_to_prime.clone(),
         }
     }
 }
 
 
-pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     pub crs: CRS<G, P, RP>,
 }
 
@@ -104,29 +104,29 @@ pub struct Witness<G: ConvertibleUnknownOrderGroup> {
     pub w: G::Elem,
 }
 
-pub struct Proof<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> {
+pub struct Proof<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
     pub c_e: <IntegerCommitment<G> as Commitment>::Instance,
     pub proof_root: RootProof<G>,
     pub proof_modeq: ModEqProof<G, P>,
-    pub proof_range: RP::Proof,
+    pub proof_hash_to_prime: RP::Proof,
 }
 
 impl<
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: RangeProofProtocol<P>
+    RP: HashToPrimeProtocol<P>
  > Clone for Proof<G, P, RP> {
     fn clone(&self) -> Self {
         Self {
             c_e: self.c_e.clone(),
             proof_root: self.proof_root.clone(),
             proof_modeq: self.proof_modeq.clone(),
-            proof_range: self.proof_range.clone(),
+            proof_hash_to_prime: self.proof_hash_to_prime.clone(),
         }
     }
 }
 
-impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofProtocol<P>> Protocol<G, P, RP> {
+impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> Protocol<G, P, RP> {
     pub fn setup<R1: MutRandState, R2: RngCore + CryptoRng>(
         parameters: &Parameters,
         rng1: &mut R1,
@@ -134,7 +134,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
     ) -> Result<Protocol<G, P, RP>, SetupError> {
         let integer_commitment_parameters = IntegerCommitment::<G>::setup(rng1);
         let pedersen_commitment_parameters = PedersenCommitment::<P>::setup(rng2);
-        let range_proof_parameters = RP::setup(rng2, &pedersen_commitment_parameters, parameters)?;
+        let hash_to_prime_parameters = RP::setup(rng2, &pedersen_commitment_parameters, parameters)?;
         Ok(Protocol {
             crs: CRS::<G, P, RP> {
                 parameters: parameters.clone(),
@@ -147,10 +147,10 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
                     parameters: parameters.clone(),
                     integer_commitment_parameters: integer_commitment_parameters.clone(),
                 },
-                crs_range: CRSRangeProof::<P, RP> {
+                crs_hash_to_prime: CRSHashToPrime::<P, RP> {
                     parameters: parameters.clone(),
                     pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
-                    range_proof_parameters: range_proof_parameters.clone(),
+                    hash_to_prime_parameters: hash_to_prime_parameters.clone(),
                 }
 
             }
@@ -160,7 +160,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
     pub fn prove<
         R1: MutRandState, 
         R2: RngCore + CryptoRng, 
-        C: MembershipVerifierChannel<G> + RootVerifierChannel<G> + ModEqVerifierChannel<G, P> + RangeVerifierChannel<P, RP>,
+        C: MembershipVerifierChannel<G> + RootVerifierChannel<G> + ModEqVerifierChannel<G, P> + HashToPrimeVerifierChannel<P, RP>,
     > (
         &self,
         verifier_channel: &mut C,
@@ -193,10 +193,10 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
             r: r.clone(),
             r_q: witness.r_q.clone(),
         })?;
-        let range = RangeProofProtocol::from_crs(&self.crs.crs_range);
-        range.prove(verifier_channel, rng2, &RangeProofStatement {
+        let hash_to_prime = HashToPrimeProtocol::from_crs(&self.crs.crs_hash_to_prime);
+        hash_to_prime.prove(verifier_channel, rng2, &HashToPrimeStatement {
             c_e_q: statement.c_e_q.clone(),
-        }, &RangeProofWitness {
+        }, &HashToPrimeWitness {
             e: witness.e.clone(),
             r_q: witness.r_q.clone(),
         })?;
@@ -204,7 +204,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
         Ok(())
     }
 
-    pub fn verify<C: MembershipProverChannel<G> + RootProverChannel<G> + ModEqProverChannel<G, P> + RangeProverChannel<P, RP>>(
+    pub fn verify<C: MembershipProverChannel<G> + RootProverChannel<G> + ModEqProverChannel<G, P> + HashToPrimeProverChannel<P, RP>>(
         &self,
         prover_channel: &mut C,
         statement: &Statement<G, P>,
@@ -221,8 +221,8 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: RangeProofPro
             c_e: c_e.clone(),
             c_e_q: statement.c_e_q.clone(),
         })?;
-        let range = RangeProofProtocol::from_crs(&self.crs.crs_range);
-        range.verify(prover_channel, &RangeProofStatement {
+        let hash_to_prime = HashToPrimeProtocol::from_crs(&self.crs.crs_hash_to_prime);
+        hash_to_prime.verify(prover_channel, &HashToPrimeStatement {
             c_e_q: statement.c_e_q.clone(),
         })?;
 
@@ -248,7 +248,7 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::range::snark::Protocol as RPProtocol,
+        protocols::hash_to_prime::snark::Protocol as RPProtocol,
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;

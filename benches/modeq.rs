@@ -9,7 +9,7 @@ use accumulator::group::Rsa2048;
 use cpsnarks_set::{
     protocols::{
         modeq::{Protocol, Statement, Witness},
-        range::snark::Protocol as RPProtocol,
+        hash_to_prime::snark::Protocol as RPProtocol,
     },
     parameters::Parameters,
     transcript::modeq::{TranscriptVerifierChannel, TranscriptProverChannel}
