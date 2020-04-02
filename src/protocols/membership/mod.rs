@@ -27,6 +27,14 @@ quick_error! {
     }
 }
 
+
+#[cfg(feature = "dalek")]
+type R1CSError = bulletproofs::r1cs::R1CSError;
+
+#[cfg(feature = "zexe")]
+type R1CSError = std::marker::PhantomData<usize>;
+
+
 quick_error! {
     #[derive(Debug)]
     pub enum ProofError {
@@ -46,8 +54,7 @@ quick_error! {
         PrimeError(err: HashToPrimeError) {
             from()
         }
-        #[cfg(feature = "dalek")]
-        BPError(err: bulletproofs::r1cs::R1CSError) {
+        BPError(err: R1CSError) {
             from()
         }
     }
@@ -69,8 +76,7 @@ quick_error! {
         ProverChannelError(err: ChannelError) {
             from()
         }
-        #[cfg(feature = "dalek")]
-        BPError(err: bulletproofs::r1cs::R1CSError) {
+        BPError(err: R1CSError) {
             from()
         }
     }
@@ -255,7 +261,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
     }
 }
 
-#[cfg(all(test, zexe))]
+#[cfg(all(test, feature = "zexe"))]
 mod test {
     use rug::Integer;
     use std::cell::RefCell;
@@ -353,6 +359,79 @@ mod test {
         let acc = accum.0.value;
         let w = accum.1.witness.0.value;
         assert_eq!(Rsa2048::exp(&w, &hashed_value), acc);
+
+
+        let proof_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
+        let statement = Statement {
+            c_e_q: commitment,
+            c_p: acc,
+        };
+        protocol.prove(&mut verifier_channel, &mut rng1, &mut rng2, &statement, &Witness {
+            e: value,
+            r_q: randomness,
+            w,
+        }).unwrap();
+        let proof = verifier_channel.proof().unwrap();
+        let verification_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+        protocol.verify(&mut prover_channel, &statement).unwrap();
+    }
+}
+
+#[cfg(all(test, feature = "dalek"))]
+mod test {
+    use rug::Integer;
+    use std::cell::RefCell;
+    use curve25519_dalek::{
+        scalar::Scalar,
+        ristretto::RistrettoPoint,
+    };
+    use rand::thread_rng;
+    use crate::{
+        parameters::Parameters,
+        commitments::Commitment,
+        transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::bp::Protocol as HPProtocol,
+    };
+    use rug::rand::RandState;
+    use accumulator::group::Rsa2048;
+    use super::{Protocol, Statement, Witness};
+    use merlin::Transcript;
+    use accumulator::{AccumulatorWithoutHashToPrime, group::Group};
+
+    const LARGE_PRIMES: [u64; 4] = [
+        553_525_575_239_331_913,
+        12_702_637_924_034_044_211,
+        378_373_571_372_703_133,
+        8_640_171_141_336_142_787,
+    ];
+
+    #[test]
+    fn test_e2e_prime() {
+        let params = Parameters::from_curve::<Scalar>().unwrap().0;
+        let mut rng1 = RandState::new();
+        rng1.seed(&Integer::from(13));
+        let mut rng2 = thread_rng();
+
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+        let protocol = Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::from_crs(&crs);
+
+        let value = Integer::from(Integer::u_pow_u(
+                2,
+                (crs.parameters.hash_to_prime_bits)
+                    as u32,
+            )) - &Integer::from(129);
+        let randomness = Integer::from(5);
+        let commitment = protocol.crs.crs_modeq.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
+
+        let accum = accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
+        let accum = accum.add(&LARGE_PRIMES.iter().skip(1).map(|p| Integer::from(*p)).collect::<Vec<_>>());
+
+        let accum = accum.add_with_proof(&[value.clone()]);
+        let acc = accum.0.value;
+        let w = accum.1.witness.0.value;
+        assert_eq!(Rsa2048::exp(&w, &value), acc);
 
 
         let proof_transcript = RefCell::new(Transcript::new(b"membership"));

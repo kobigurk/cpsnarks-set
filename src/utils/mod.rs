@@ -45,7 +45,7 @@ pub fn bits_big_endian_to_bytes_big_endian(bits: &[bool]) -> Vec<u8> {
 }
 
 pub fn integer_to_bytes(num: &Integer) -> Vec<u8> {
-    let digits = 32;
+    let digits = num.significant_digits::<u8>();
     let mut bytes = vec![0u8; digits];
     num.write_digits(&mut bytes, Order::MsfBe);
     bytes

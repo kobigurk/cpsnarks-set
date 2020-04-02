@@ -123,8 +123,14 @@ mod dalek {
         fn from_bits(bits: &[bool]) -> Self {
             let big_endian_bytes = bits_big_endian_to_bytes_big_endian(&bits);
             let little_endian_bytes = big_endian_bytes.to_vec().into_iter().rev().collect::<Vec<_>>();
+            let little_endian_bytes_length = little_endian_bytes.len();
+            let little_endian_bytes_padded = if little_endian_bytes_length < 32 {
+                [little_endian_bytes, vec![0u8; 32 - little_endian_bytes_length]].concat()
+            } else {
+                little_endian_bytes
+            };
             let mut little_endian_fixed_bytes = [0u8; 32];
-            little_endian_fixed_bytes[..].copy_from_slice(little_endian_bytes.as_ref());
+            little_endian_fixed_bytes[..].copy_from_slice(little_endian_bytes_padded.as_ref());
             Scalar::from_bits(little_endian_fixed_bytes)
         }
         fn add(&self, other: &Self) -> Self {
