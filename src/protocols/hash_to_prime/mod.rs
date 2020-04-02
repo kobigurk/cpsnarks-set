@@ -12,7 +12,7 @@ use crate::{
 use rug::Integer;
 
 #[cfg(feature = "zexe")]
-pub mod snark;
+pub mod snark_range;
 #[cfg(feature = "zexe")]
 pub mod snark_hash;
 
@@ -46,6 +46,7 @@ pub trait HashToPrimeProtocol<P: CurvePointProjective> {
     ) -> Result<(), VerificationError>
         where
             Self: Sized;
+    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>;
 }
 
 pub struct CRSHashToPrime<P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {

@@ -232,7 +232,7 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark::Protocol as HPProtocol,
+        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
     };
     use rug::rand::RandState;
     use super::{Protocol, Statement, Witness};

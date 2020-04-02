@@ -14,11 +14,12 @@ use crate::{
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     utils::{integer_to_bigint_mod_q},
     protocols::{
-        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness},
+        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness, HashToPrimeError},
         membership::{SetupError, ProofError, VerificationError},
     }
 };
 use rand::Rng;
+use rug::Integer;
 use std::ops::Sub;
 
 pub struct HashToPrimeCircuit<E: PairingEngine> {
@@ -104,6 +105,10 @@ impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
 
         Ok(())
     }
+
+    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
+        Ok((e.clone(), 0))
+    }
 }
 
 #[cfg(test)]
@@ -120,7 +125,7 @@ mod test {
         transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
         protocols::hash_to_prime::{
             HashToPrimeProtocol,
-            snark::Protocol as HPProtocol,
+            snark_range::Protocol as HPProtocol,
         },
         utils::integer_to_bigint_mod_q,
     };

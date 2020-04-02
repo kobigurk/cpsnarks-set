@@ -172,9 +172,10 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
         statement: &Statement<G, P>,
         witness: &Witness<G>,
     ) -> Result<(), ProofError> {
+        let (hashed_e, _) = self.hash_to_prime(&witness.e)?;
         let r = random_between(rng1, &Integer::from(0), &G::order_upper_bound());
         let c_e = self.crs.crs_root.integer_commitment_parameters.commit(
-            &witness.e, 
+            &hashed_e, 
             &r,
         )?;
         verifier_channel.send_c_e(&c_e)?;
@@ -183,7 +184,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
             c_e: c_e.clone(),
             acc: statement.c_p.clone(),
         }, &RootWitness {
-            e: witness.e.clone(),
+            e: hashed_e.clone(),
             r: r.clone(),
             w: witness.w.clone(),
         })?;
@@ -192,7 +193,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
             c_e: c_e.clone(),
             c_e_q: statement.c_e_q.clone(),
         }, &ModEqWitness {
-            e: witness.e.clone(),
+            e: hashed_e.clone(),
             r: r.clone(),
             r_q: witness.r_q.clone(),
         })?;
@@ -232,6 +233,11 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
         Ok(())
     }
 
+    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError> {
+        let hash_to_prime = HashToPrimeProtocol::from_crs(&self.crs.crs_hash_to_prime);
+        hash_to_prime.hash_to_prime(e)
+    }
+
     pub fn from_crs(
         crs: &CRS<G, P, HP>
     ) -> Protocol<G, P, HP> {
@@ -251,7 +257,8 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark::Protocol as HPProtocol,
+        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
+        protocols::hash_to_prime::snark_hash::{Protocol as HPHashProtocol, HashToPrimeHashParameters},
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
@@ -267,7 +274,7 @@ mod test {
     ];
 
     #[test]
-    fn test_e2e() {
+    fn test_e2e_prime() {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
@@ -291,6 +298,53 @@ mod test {
         let acc = accum.0.value;
         let w = accum.1.witness.0.value;
         assert_eq!(Rsa2048::exp(&w, &value), acc);
+
+
+        let proof_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
+        let statement = Statement {
+            c_e_q: commitment,
+            c_p: acc,
+        };
+        protocol.prove(&mut verifier_channel, &mut rng1, &mut rng2, &statement, &Witness {
+            e: value,
+            r_q: randomness,
+            w,
+        }).unwrap();
+        let proof = verifier_channel.proof().unwrap();
+        let verification_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+        protocol.verify(&mut prover_channel, &statement).unwrap();
+    }
+
+    #[test]
+    fn test_e2e_hash_to_prime() {
+        struct TestHashToPrimeParameters {}
+        impl HashToPrimeHashParameters for TestHashToPrimeParameters {
+            const MESSAGE_SIZE: u16 = 254;
+        }
+
+
+        let params = Parameters::from_security_level(128).unwrap();
+        let mut rng1 = RandState::new();
+        rng1.seed(&Integer::from(13));
+        let mut rng2 = thread_rng();
+
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPHashProtocol<Bls12_381, TestHashToPrimeParameters>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+        let protocol = Protocol::<Rsa2048, G1Projective, HPHashProtocol<Bls12_381, TestHashToPrimeParameters>>::from_crs(&crs);
+
+        let value = Integer::from(24928329);
+        let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
+        let randomness = Integer::from(5);
+        let commitment = protocol.crs.crs_modeq.pedersen_commitment_parameters.commit(&hashed_value, &randomness).unwrap();
+
+        let accum = accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
+        let accum = accum.add(&LARGE_PRIMES.iter().skip(1).map(|p| Integer::from(*p)).collect::<Vec<_>>());
+
+        let accum = accum.add_with_proof(&[hashed_value.clone()]);
+        let acc = accum.0.value;
+        let w = accum.1.witness.0.value;
+        assert_eq!(Rsa2048::exp(&w, &hashed_value), acc);
 
 
         let proof_transcript = RefCell::new(Transcript::new(b"membership"));

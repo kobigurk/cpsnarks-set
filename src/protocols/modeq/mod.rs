@@ -158,7 +158,7 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::modeq::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark::Protocol as HPProtocol,
+        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;

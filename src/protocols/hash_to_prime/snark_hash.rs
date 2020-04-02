@@ -37,60 +37,7 @@ pub trait HashToPrimeHashParameters {
 }
 
 
-fn hash_to_prime<E: PairingEngine, P: HashToPrimeHashParameters>(security_level: u16, required_bits: u16, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
-    let index_bit_length = P::index_bit_length(security_level);
-    let value = integer_to_bigint_mod_q::<E::G1Projective>(e)?;
-    let bigint_bits = 64*((E::Fr::one().neg().into_repr().num_bits() + 63)/64);
-    let bits_to_skip =  bigint_bits as usize - P::MESSAGE_SIZE as usize;
-    let value_raw_bits = value.into_repr().to_bits();
-    for b in &value_raw_bits[..bits_to_skip] {
-        if *b != false {
-            return Err(HashToPrimeError::ValueTooBig);
-        }
-    }
-    let mut value_bits = value_raw_bits[bits_to_skip..].to_vec();
-    if value_bits.len() < P::MESSAGE_SIZE as usize {
-        value_bits = [vec![false; P::MESSAGE_SIZE as usize - value_bits.len()], value_bits].concat();
-    }
-    for index in 0..1<<index_bit_length {
-        let mut index_bits = vec![];
-        for i in 0..index_bit_length {
-            let mask = 1u64 << i;
-            let bit = mask & index == mask;
-            index_bits.push(bit);
-        }
-        let bits_to_hash  = [index_bits.as_slice(), &value_bits].concat();
-        let bits_to_hash_padded = if bits_to_hash.len() % 8 != 0 {
-            let padding_length = 8 - bits_to_hash.len() % 8;
-            [&vec![false; padding_length][..], bits_to_hash.as_slice()].concat()
-        } else {
-            bits_to_hash
-        };
-        let bits_big_endian = bits_to_hash_padded.into_iter().rev().collect::<Vec<_>>();
-        let bytes_to_hash = bits_big_endian_to_bytes_big_endian(&bits_big_endian).into_iter().rev().collect::<Vec<_>>();
-        let mut hasher = Blake2s::new_keyed(&[], 32);
-        hasher.process(&bytes_to_hash);
-        let hash = hasher.fixed_result();
-        let hash_big_endian = hash.into_iter().rev().collect::<Vec<_>>();
-        let hash_bits = [
-            vec![true].as_slice(),
-            bytes_big_endian_to_bits_big_endian(&hash_big_endian).into_iter().rev().take(required_bits as usize - 1).collect::<Vec<_>>().as_slice(),
-        ].concat();
 
-        let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(&hash_bits));
-        let integer = bigint_to_integer::<E::G1Projective>(&element);
-        // TODO: confirm repititions
-        let is_prime = integer.is_probably_prime(100);
-        if is_prime == IsPrime::No {
-            continue;
-        }
-
-        return Ok((integer, index));
-    }
-
-    Err(HashToPrimeError::CouldNotFindIndex)
-       
-}
 
 pub struct HashToPrimeHashCircuit<E: PairingEngine, P: HashToPrimeHashParameters> {
     security_level: u16,
@@ -201,7 +148,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         witness: &Witness,
     ) -> Result<(), ProofError>
     {
-        let (_, index) = hash_to_prime::<E, P>(self.crs.parameters.security_level, self.crs.parameters.hash_to_prime_bits, &witness.e)?;
+        let (_, index) = self.hash_to_prime(&witness.e)?;
         let c = HashToPrimeHashCircuit::<E, P> {
             security_level: self.crs.parameters.security_level,
             required_bit_size: self.crs.parameters.hash_to_prime_bits,
@@ -234,6 +181,61 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
 
         Ok(())
     }
+
+    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
+        let index_bit_length = P::index_bit_length(self.crs.parameters.security_level);
+        let value = integer_to_bigint_mod_q::<E::G1Projective>(e)?;
+        let bigint_bits = 64*((E::Fr::one().neg().into_repr().num_bits() + 63)/64);
+        let bits_to_skip =  bigint_bits as usize - P::MESSAGE_SIZE as usize;
+        let value_raw_bits = value.into_repr().to_bits();
+        for b in &value_raw_bits[..bits_to_skip] {
+            if *b != false {
+                return Err(HashToPrimeError::ValueTooBig);
+            }
+        }
+        let mut value_bits = value_raw_bits[bits_to_skip..].to_vec();
+        if value_bits.len() < P::MESSAGE_SIZE as usize {
+            value_bits = [vec![false; P::MESSAGE_SIZE as usize - value_bits.len()], value_bits].concat();
+        }
+        for index in 0..1<<index_bit_length {
+            let mut index_bits = vec![];
+            for i in 0..index_bit_length {
+                let mask = 1u64 << i;
+                let bit = mask & index == mask;
+                index_bits.push(bit);
+            }
+            let bits_to_hash  = [index_bits.as_slice(), &value_bits].concat();
+            let bits_to_hash_padded = if bits_to_hash.len() % 8 != 0 {
+                let padding_length = 8 - bits_to_hash.len() % 8;
+                [&vec![false; padding_length][..], bits_to_hash.as_slice()].concat()
+            } else {
+                bits_to_hash
+            };
+            let bits_big_endian = bits_to_hash_padded.into_iter().rev().collect::<Vec<_>>();
+            let bytes_to_hash = bits_big_endian_to_bytes_big_endian(&bits_big_endian).into_iter().rev().collect::<Vec<_>>();
+            let mut hasher = Blake2s::new_keyed(&[], 32);
+            hasher.process(&bytes_to_hash);
+            let hash = hasher.fixed_result();
+            let hash_big_endian = hash.into_iter().rev().collect::<Vec<_>>();
+            let hash_bits = [
+                vec![true].as_slice(),
+                bytes_big_endian_to_bits_big_endian(&hash_big_endian).into_iter().rev().take(self.crs.parameters.hash_to_prime_bits as usize - 1).collect::<Vec<_>>().as_slice(),
+            ].concat();
+
+            let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(&hash_bits));
+            let integer = bigint_to_integer::<E::G1Projective>(&element);
+            // TODO: confirm repititions
+            let is_prime = integer.is_probably_prime(100);
+            if is_prime == IsPrime::No {
+                continue;
+            }
+
+            return Ok((integer, index));
+        }
+
+        Err(HashToPrimeError::CouldNotFindIndex)
+        
+    }
 }
 
 #[cfg(test)]
@@ -256,7 +258,7 @@ mod test {
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
-    use super::{Protocol, Statement, Witness, HashToPrimeHashCircuit, HashToPrimeHashParameters, hash_to_prime};
+    use super::{Protocol, Statement, Witness, HashToPrimeHashCircuit, HashToPrimeHashParameters};
     use merlin::Transcript;
 
     struct TestParameters {}
@@ -267,13 +269,19 @@ mod test {
     #[test]
     fn test_circuit() {
         let mut cs = TestConstraintSystem::<Fr>::new();
-        let security_level = 64;
-        let required_bits = 254;
+        let params = Parameters::from_security_level(128).unwrap();
+        let mut rng1 = RandState::new();
+        rng1.seed(&Integer::from(13));
+        let mut rng2 = thread_rng();
+
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381, TestParameters>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
+        let protocol = Protocol::<Bls12_381, TestParameters>::from_crs(&crs);
+
         let value = Integer::from(12);
-        let (prime, index) = hash_to_prime::<Bls12_381, TestParameters>(security_level, required_bits, &value).unwrap();
+        let (prime, index) = protocol.hash_to_prime(&value).unwrap();
         let c = HashToPrimeHashCircuit::<Bls12_381, TestParameters> {
-            security_level: security_level,
-            required_bit_size: required_bits,
+            security_level: crs.parameters.security_level,
+            required_bit_size: crs.parameters.hash_to_prime_bits,
             value: Some(integer_to_bigint_mod_q::<G1Projective>(&value).unwrap().into()),
             index: Some(index),
             parameters_type: std::marker::PhantomData,
@@ -296,7 +304,7 @@ mod test {
         let protocol = Protocol::<Bls12_381, TestParameters>::from_crs(&crs);
 
         let value = Integer::from(13);
-        let (hashed_value, _) = hash_to_prime::<Bls12_381, TestParameters>(crs.parameters.security_level, crs.parameters.hash_to_prime_bits, &value).unwrap();
+        let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
         let randomness = Integer::from(9);
         let commitment = protocol.crs.pedersen_commitment_parameters.commit(&hashed_value, &randomness).unwrap();
 
