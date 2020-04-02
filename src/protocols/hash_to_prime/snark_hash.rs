@@ -224,8 +224,8 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
 
             let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(&hash_bits));
             let integer = bigint_to_integer::<E::G1Projective>(&element);
-            // TODO: confirm repititions
-            let is_prime = integer.is_probably_prime(100);
+            // from the gmp documentation: "A composite number will be identified as a prime with an asymptotic probability of less than 4^(-reps)", so we choose reps = security_level/2
+            let is_prime = integer.is_probably_prime(self.crs.parameters.security_level as u32/2);
             if is_prime == IsPrime::No {
                 continue;
             }

@@ -247,7 +247,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, zexe))]
 mod test {
     use rug::Integer;
     use std::cell::RefCell;

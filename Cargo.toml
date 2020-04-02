@@ -16,14 +16,14 @@ r1cs-core = { path = "../zexe/r1cs-core" }
 r1cs-std = { path = "../zexe/r1cs-std" }
 crypto-primitives = { path = "../zexe/crypto-primitives", features = ["r1cs"]}
 legogro16 = { path = "../zexe/legogro16" }
-curve25519-dalek = { version = "2" }
-bulletproofs = { version = "2", optional = true }
+curve25519-dalek = { version = "2", features = ["serde"] }
+bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.7.6"
 blake2 = "0.7.1"
-hex = "0.4.2"
+spacesuit = { path = "../slingshot/spacesuit", optional = true }
 
 [features]
-dalek = ["bulletproofs"]
+dalek = ["bulletproofs", "spacesuit"]
 zexe = []
 default = ["zexe"]
 
