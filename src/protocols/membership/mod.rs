@@ -46,6 +46,10 @@ quick_error! {
         PrimeError(err: HashToPrimeError) {
             from()
         }
+        #[cfg(feature = "dalek")]
+        BPError(err: bulletproofs::r1cs::R1CSError) {
+            from()
+        }
     }
 }
 
@@ -63,6 +67,10 @@ quick_error! {
             from()
         }
         ProverChannelError(err: ChannelError) {
+            from()
+        }
+        #[cfg(feature = "dalek")]
+        BPError(err: bulletproofs::r1cs::R1CSError) {
             from()
         }
     }

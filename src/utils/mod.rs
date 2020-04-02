@@ -45,7 +45,7 @@ pub fn bits_big_endian_to_bytes_big_endian(bits: &[bool]) -> Vec<u8> {
 }
 
 pub fn integer_to_bytes(num: &Integer) -> Vec<u8> {
-    let digits = num.significant_digits::<u8>();
+    let digits = 32;
     let mut bytes = vec![0u8; digits];
     num.write_digits(&mut bytes, Order::MsfBe);
     bytes
@@ -88,6 +88,15 @@ pub fn bigint_to_integer<P: CurvePointProjective>(num: &P::ScalarField)
     let mut big = Integer::from(0);
     big.assign_digits(&bytes, Order::MsfBe);
     big
+}
+
+pub fn log2(x: usize) -> u32 {
+    if x <= 1 {
+        return 0;
+    }
+
+    let n = x.leading_zeros();
+    core::mem::size_of::<usize>() as u32 * 8 - n
 }
 
 #[cfg(all(test, feature="zexe"))]

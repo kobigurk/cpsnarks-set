@@ -113,7 +113,7 @@ mod dalek {
         }
 
         fn size_in_bits() -> usize {
-            255 
+            252 
         }
         fn to_bits(&self) -> Vec<bool> {
             let little_endian_bytes = self.to_bytes();
@@ -121,8 +121,8 @@ mod dalek {
             bytes_big_endian_to_bits_big_endian(&big_endian_bytes)
         }
         fn from_bits(bits: &[bool]) -> Self {
-            let little_endian_bits = bits.to_vec().into_iter().rev().collect::<Vec<_>>();
-            let little_endian_bytes = bits_big_endian_to_bytes_big_endian(&little_endian_bits);
+            let big_endian_bytes = bits_big_endian_to_bytes_big_endian(&bits);
+            let little_endian_bytes = big_endian_bytes.to_vec().into_iter().rev().collect::<Vec<_>>();
             let mut little_endian_fixed_bytes = [0u8; 32];
             little_endian_fixed_bytes[..].copy_from_slice(little_endian_bytes.as_ref());
             Scalar::from_bits(little_endian_fixed_bytes)
@@ -169,4 +169,18 @@ mod dalek {
         }
 
     }
+
+    #[cfg(test)]
+    mod test {
+        use super::Field;
+        use curve25519_dalek::scalar::Scalar;
+        #[test]
+        fn test_to_from_bits() {
+            let s = Scalar::from(10 as u64);
+            let bits = <Scalar as Field>::to_bits(&s);
+            let s2 = <Scalar as Field>::from_bits(&bits);
+            assert_eq!(s, s2);
+        }
+    }
+
 }

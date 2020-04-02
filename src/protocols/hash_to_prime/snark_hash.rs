@@ -1,5 +1,5 @@
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use algebra_core::{PrimeField, PairingEngine, UniformRand, BigInteger, log2, One, AffineCurve};
+use algebra_core::{PrimeField, PairingEngine, UniformRand, BigInteger, One, AffineCurve};
 use r1cs_std::{
     Assignment,
     boolean::Boolean,
@@ -13,7 +13,7 @@ use crate::{
     parameters::Parameters,
     commitments::pedersen::PedersenCommitment,
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-    utils::{integer_to_bigint_mod_q, bigint_to_integer, bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian},
+    utils::{integer_to_bigint_mod_q, bigint_to_integer, bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian, log2},
     protocols::{
         hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness, HashToPrimeError},
         membership::{SetupError, ProofError, VerificationError},

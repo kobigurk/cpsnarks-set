@@ -1,4 +1,4 @@
-use algebra_core::{PrimeField, ModelParameters};
+use crate::utils::curve::Field;
 
 #[derive(Clone, Debug)]
 pub struct Parameters {
@@ -30,8 +30,8 @@ impl Parameters {
         Ok(parameters)
     }
 
-    pub fn from_curve<P: ModelParameters>() -> Result<(Parameters, u16), ParametersError> {
-        let field_size_bits = P::ScalarField::size_in_bits() as u16;
+    pub fn from_curve<P: Field>() -> Result<(Parameters, u16), ParametersError> {
+        let field_size_bits = P::size_in_bits() as u16;
         let security_level = field_size_bits/2;
         let parameters = Parameters {
             security_level,
@@ -66,9 +66,10 @@ mod test {
         params.is_valid().unwrap();
     }
 
+    #[cfg(all(test, feature = "zexe"))]
     #[test]
     fn test_valid_for_some_fields() {
-        let params_with_security_level = Parameters::from_curve::<algebra::bls12_381::g1::Parameters>().unwrap();
+        let params_with_security_level = Parameters::from_curve::<algebra::bls12_381::Fr>().unwrap();
         println!("security level: {}, params: {:#?}", params_with_security_level.1, params_with_security_level.0);
         params_with_security_level.0.is_valid().unwrap();
     }
