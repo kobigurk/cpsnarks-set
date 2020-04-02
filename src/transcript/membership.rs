@@ -43,24 +43,24 @@ pub struct TranscriptVerifierChannel<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
 > {
     transcript: &'a RefCell<T>,
     c_e: Option<<IntegerCommitment<G> as Commitment>::Instance>,
     root_transcript_verifier_channel: RootTranscriptVerifierChannel<'a, G, T>,
     modeq_transcript_verifier_channel: ModEqTranscriptVerifierChannel<'a, G, P, T>,
-    hash_to_prime_transcript_verifier_channel: HashToPrimeTranscriptVerifierChannel<'a, P, RP, T>,
+    hash_to_prime_transcript_verifier_channel: HashToPrimeTranscriptVerifierChannel<'a, P, HP, T>,
 }
 
 impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> TranscriptVerifierChannel<'a, G, P, RP, T> {
-    pub fn new(crs: &CRS<G, P, RP>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, P, RP, T> {
+> TranscriptVerifierChannel<'a, G, P, HP, T> {
+    pub fn new(crs: &CRS<G, P, HP>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, P, HP, T> {
         TranscriptVerifierChannel {
             transcript,
             c_e: None,
@@ -70,7 +70,7 @@ impl<
         }
     }
 
-    pub fn proof(&self) -> Result<Proof<G, P, RP>, TranscriptChannelError> {
+    pub fn proof(&self) -> Result<Proof<G, P, HP>, TranscriptChannelError> {
         let proof_root = self.root_transcript_verifier_channel.proof()?;
         let proof_modeq = self.modeq_transcript_verifier_channel.proof()?;
         let proof_hash_to_prime = self.hash_to_prime_transcript_verifier_channel.proof()?;
@@ -91,9 +91,9 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> RootVerifierChannel<G> for TranscriptVerifierChannel<'a, G, P, RP, T> {
+> RootVerifierChannel<G> for TranscriptVerifierChannel<'a, G, P, HP, T> {
     fn send_message1(&mut self, message: &crate::protocols::root::Message1<G>) -> Result<(), ChannelError> {
         self.root_transcript_verifier_channel.send_message1(message)
     }
@@ -112,9 +112,9 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> ModEqVerifierChannel<G, P> for TranscriptVerifierChannel<'a, G, P, RP, T> {
+> ModEqVerifierChannel<G, P> for TranscriptVerifierChannel<'a, G, P, HP, T> {
     fn send_message1(&mut self, message: &crate::protocols::modeq::Message1<G, P>) -> Result<(), ChannelError> {
         self.modeq_transcript_verifier_channel.send_message1(message)
     }
@@ -130,10 +130,10 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> HashToPrimeVerifierChannel<P, RP> for TranscriptVerifierChannel<'a, G, P, RP, T> {
-    fn send_proof(&mut self, proof: &RP::Proof) -> Result<(), ChannelError> {
+> HashToPrimeVerifierChannel<P, HP> for TranscriptVerifierChannel<'a, G, P, HP, T> {
+    fn send_proof(&mut self, proof: &HP::Proof) -> Result<(), ChannelError> {
         self.hash_to_prime_transcript_verifier_channel.send_proof(proof)
     }
 }
@@ -142,23 +142,23 @@ pub struct TranscriptProverChannel<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
 > {
     transcript: &'a RefCell<T>,
     root_transcript_prover_channel: RootTranscriptProverChannel<'a, G, T>,
     modeq_transcript_prover_channel: ModEqTranscriptProverChannel<'a, G, P, T>,
-    hash_to_prime_transcript_prover_channel: HashToPrimeTranscriptProverChannel<'a, P, RP, T>,
-    proof: Proof<G,P, RP>,
+    hash_to_prime_transcript_prover_channel: HashToPrimeTranscriptProverChannel<'a, P, HP, T>,
+    proof: Proof<G,P, HP>,
 }
 
 impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> RootProverChannel<G> for TranscriptProverChannel<'a, G, P, RP, T> {
+> RootProverChannel<G> for TranscriptProverChannel<'a, G, P, HP, T> {
     fn receive_message1(&mut self) -> Result<crate::protocols::root::Message1<G>, ChannelError> {
         self.root_transcript_prover_channel.receive_message1()
     }
@@ -177,9 +177,9 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> ModEqProverChannel<G, P> for TranscriptProverChannel<'a, G, P, RP, T> {
+> ModEqProverChannel<G, P> for TranscriptProverChannel<'a, G, P, HP, T> {
     fn receive_message1(&mut self) -> Result<crate::protocols::modeq::Message1<G, P>, ChannelError> {
         self.modeq_transcript_prover_channel.receive_message1()
     }
@@ -195,10 +195,10 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> HashToPrimeProverChannel<P, RP> for TranscriptProverChannel<'a, G, P, RP, T> {
-    fn receive_proof(&mut self) -> Result<RP::Proof, ChannelError> {
+> HashToPrimeProverChannel<P, HP> for TranscriptProverChannel<'a, G, P, HP, T> {
+    fn receive_proof(&mut self) -> Result<HP::Proof, ChannelError> {
         self.hash_to_prime_transcript_prover_channel.receive_proof()
     }
 }
@@ -207,9 +207,9 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> MembershipVerifierChannel<G> for TranscriptVerifierChannel<'a, G, P, RP, T> {
+> MembershipVerifierChannel<G> for TranscriptVerifierChannel<'a, G, P, HP, T> {
     fn send_c_e(&mut self, c_e: &<IntegerCommitment<G> as Commitment>::Instance) -> Result<(), ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.membership_domain_sep();
@@ -223,9 +223,9 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> MembershipProverChannel<G> for TranscriptProverChannel<'a, G, P, RP, T> {
+> MembershipProverChannel<G> for TranscriptProverChannel<'a, G, P, HP, T> {
     fn receive_c_e(&mut self) -> Result<<IntegerCommitment<G> as Commitment>::Instance, ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.membership_domain_sep();
@@ -238,10 +238,10 @@ impl<
     'a, 
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>,
+    HP: HashToPrimeProtocol<P>,
     T: TranscriptProtocolMembership<G> + TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
-> TranscriptProverChannel<'a, G, P, RP, T> {
-    pub fn new(crs: &CRS<G, P, RP>, transcript: &'a RefCell<T>, proof: &Proof<G, P, RP>) -> TranscriptProverChannel<'a, G, P, RP, T> {
+> TranscriptProverChannel<'a, G, P, HP, T> {
+    pub fn new(crs: &CRS<G, P, HP>, transcript: &'a RefCell<T>, proof: &Proof<G, P, HP>) -> TranscriptProverChannel<'a, G, P, HP, T> {
         TranscriptProverChannel {
             transcript,
             root_transcript_prover_channel: RootTranscriptProverChannel::new(&crs.crs_root, transcript, &proof.proof_root),

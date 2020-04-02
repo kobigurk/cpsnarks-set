@@ -9,7 +9,7 @@ use accumulator::group::Rsa2048;
 use cpsnarks_set::{
     protocols::{
         modeq::{Protocol, Statement, Witness},
-        hash_to_prime::snark::Protocol as RPProtocol,
+        hash_to_prime::snark::Protocol as HPProtocol,
     },
     parameters::Parameters,
     transcript::modeq::{TranscriptVerifierChannel, TranscriptProverChannel}
@@ -22,7 +22,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     rng1.seed(&Integer::from(13));
     let mut rng2 = thread_rng();
 
-    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
+    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_modeq;
     let protocol = Protocol::<Rsa2048, G1Projective>::from_crs(&crs);
 
     let value1 = Integer::from(2);

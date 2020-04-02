@@ -48,13 +48,13 @@ pub trait HashToPrimeProtocol<P: CurvePointProjective> {
             Self: Sized;
 }
 
-pub struct CRSHashToPrime<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
+pub struct CRSHashToPrime<P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {
     pub parameters: Parameters,
     pub pedersen_commitment_parameters: PedersenCommitment<P>,
-    pub hash_to_prime_parameters: RP::Parameters,
+    pub hash_to_prime_parameters: HP::Parameters,
 }
 
-impl<P: CurvePointProjective, RP: HashToPrimeProtocol<P>> Clone for CRSHashToPrime<P, RP> {
+impl<P: CurvePointProjective, HP: HashToPrimeProtocol<P>> Clone for CRSHashToPrime<P, HP> {
     fn clone(&self) -> Self {
         Self {
             parameters: self.parameters.clone(),

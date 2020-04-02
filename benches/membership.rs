@@ -9,7 +9,7 @@ use cpsnarks_set::{
     transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
     protocols::{
         membership::{Protocol, Statement, Witness},
-        hash_to_prime::snark::Protocol as RPProtocol,
+        hash_to_prime::snark::Protocol as HPProtocol,
     },
 };
 use rug::rand::RandState;
@@ -30,8 +30,8 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     rng1.seed(&Integer::from(13));
     let mut rng2 = thread_rng();
 
-    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
-    let protocol = Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::from_crs(&crs);
+    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+    let protocol = Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::from_crs(&crs);
 
     let value = Integer::from(Integer::u_pow_u(
             2,

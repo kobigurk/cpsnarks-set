@@ -115,7 +115,7 @@ mod test {
         transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
         protocols::hash_to_prime::{
             HashToPrimeProtocol,
-            snark::Protocol as RPProtocol,
+            snark::Protocol as HPProtocol,
         },
         utils::integer_to_bigint_mod_q,
     };
@@ -144,7 +144,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
         let protocol = Protocol::<Bls12_381>::from_crs(&crs);
 
         let value = Integer::from(Integer::u_pow_u(

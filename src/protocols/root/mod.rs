@@ -232,7 +232,7 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark::Protocol as RPProtocol,
+        protocols::hash_to_prime::snark::Protocol as HPProtocol,
     };
     use rug::rand::RandState;
     use super::{Protocol, Statement, Witness};
@@ -253,7 +253,7 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);
 
         let value = Integer::from(LARGE_PRIMES[0]);

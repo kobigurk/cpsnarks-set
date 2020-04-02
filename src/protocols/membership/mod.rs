@@ -65,19 +65,19 @@ quick_error! {
     }
 }
 
-pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
+pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {
     // G contains the information about Z^*_N
     pub parameters: Parameters,
     pub crs_root: CRSRoot<G>,
     pub crs_modeq: CRSModEq<G, P>,
-    pub crs_hash_to_prime: CRSHashToPrime<P, RP>,
+    pub crs_hash_to_prime: CRSHashToPrime<P, HP>,
 }
 
 impl<
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>
- > Clone for CRS<G, P, RP> {
+    HP: HashToPrimeProtocol<P>
+ > Clone for CRS<G, P, HP> {
     fn clone(&self) -> Self {
         Self {
             parameters: self.parameters.clone(),
@@ -89,8 +89,8 @@ impl<
 }
 
 
-pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
-    pub crs: CRS<G, P, RP>,
+pub struct Protocol<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {
+    pub crs: CRS<G, P, HP>,
 }
 
 pub struct Statement<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
@@ -104,18 +104,18 @@ pub struct Witness<G: ConvertibleUnknownOrderGroup> {
     pub w: G::Elem,
 }
 
-pub struct Proof<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> {
+pub struct Proof<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {
     pub c_e: <IntegerCommitment<G> as Commitment>::Instance,
     pub proof_root: RootProof<G>,
     pub proof_modeq: ModEqProof<G, P>,
-    pub proof_hash_to_prime: RP::Proof,
+    pub proof_hash_to_prime: HP::Proof,
 }
 
 impl<
     G: ConvertibleUnknownOrderGroup, 
     P: CurvePointProjective, 
-    RP: HashToPrimeProtocol<P>
- > Clone for Proof<G, P, RP> {
+    HP: HashToPrimeProtocol<P>
+ > Clone for Proof<G, P, HP> {
     fn clone(&self) -> Self {
         Self {
             c_e: self.c_e.clone(),
@@ -126,17 +126,17 @@ impl<
     }
 }
 
-impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimeProtocol<P>> Protocol<G, P, RP> {
+impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimeProtocol<P>> Protocol<G, P, HP> {
     pub fn setup<R1: MutRandState, R2: RngCore + CryptoRng>(
         parameters: &Parameters,
         rng1: &mut R1,
         rng2: &mut R2,
-    ) -> Result<Protocol<G, P, RP>, SetupError> {
+    ) -> Result<Protocol<G, P, HP>, SetupError> {
         let integer_commitment_parameters = IntegerCommitment::<G>::setup(rng1);
         let pedersen_commitment_parameters = PedersenCommitment::<P>::setup(rng2);
-        let hash_to_prime_parameters = RP::setup(rng2, &pedersen_commitment_parameters, parameters)?;
+        let hash_to_prime_parameters = HP::setup(rng2, &pedersen_commitment_parameters, parameters)?;
         Ok(Protocol {
-            crs: CRS::<G, P, RP> {
+            crs: CRS::<G, P, HP> {
                 parameters: parameters.clone(),
                 crs_modeq: CRSModEq::<G, P> {
                     parameters: parameters.clone(),
@@ -147,7 +147,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimePr
                     parameters: parameters.clone(),
                     integer_commitment_parameters: integer_commitment_parameters.clone(),
                 },
-                crs_hash_to_prime: CRSHashToPrime::<P, RP> {
+                crs_hash_to_prime: CRSHashToPrime::<P, HP> {
                     parameters: parameters.clone(),
                     pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
                     hash_to_prime_parameters: hash_to_prime_parameters.clone(),
@@ -160,7 +160,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimePr
     pub fn prove<
         R1: MutRandState, 
         R2: RngCore + CryptoRng, 
-        C: MembershipVerifierChannel<G> + RootVerifierChannel<G> + ModEqVerifierChannel<G, P> + HashToPrimeVerifierChannel<P, RP>,
+        C: MembershipVerifierChannel<G> + RootVerifierChannel<G> + ModEqVerifierChannel<G, P> + HashToPrimeVerifierChannel<P, HP>,
     > (
         &self,
         verifier_channel: &mut C,
@@ -204,7 +204,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimePr
         Ok(())
     }
 
-    pub fn verify<C: MembershipProverChannel<G> + RootProverChannel<G> + ModEqProverChannel<G, P> + HashToPrimeProverChannel<P, RP>>(
+    pub fn verify<C: MembershipProverChannel<G> + RootProverChannel<G> + ModEqProverChannel<G, P> + HashToPrimeProverChannel<P, HP>>(
         &self,
         prover_channel: &mut C,
         statement: &Statement<G, P>,
@@ -230,8 +230,8 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, RP: HashToPrimePr
     }
 
     pub fn from_crs(
-        crs: &CRS<G, P, RP>
-    ) -> Protocol<G, P, RP> {
+        crs: &CRS<G, P, HP>
+    ) -> Protocol<G, P, HP> {
         Protocol {
             crs: crs.clone(),
         }
@@ -248,7 +248,7 @@ mod test {
         parameters::Parameters,
         commitments::Commitment,
         transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark::Protocol as RPProtocol,
+        protocols::hash_to_prime::snark::Protocol as HPProtocol,
     };
     use rug::rand::RandState;
     use accumulator::group::Rsa2048;
@@ -270,8 +270,8 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
-        let protocol = Protocol::<Rsa2048, G1Projective, RPProtocol<Bls12_381>>::from_crs(&crs);
+        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+        let protocol = Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::from_crs(&crs);
 
         let value = Integer::from(Integer::u_pow_u(
                 2,
