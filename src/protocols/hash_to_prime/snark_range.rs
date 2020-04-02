@@ -36,7 +36,11 @@ impl<E: PairingEngine> ConstraintSynthesizer<E::Fr>  for HashToPrimeCircuit<E> {
         // big-endian bits
         let bits = f.to_bits_strict(cs.ns(|| "to bits"))?;
         let modulus_bits = E::Fr::size_in_bits();
-        bits[modulus_bits - self.required_bit_size as usize].enforce_equal(cs.ns(|| "enforce highest required bit is zero"), &Boolean::constant(true))?;
+        let bits_to_skip = modulus_bits - self.required_bit_size as usize;
+        for (i, b) in bits[..bits_to_skip].iter().enumerate() {
+            b.enforce_equal(cs.ns( || format!("enforce extra bit {} is zero", i)), &Boolean::constant(false))?;
+        }
+        bits[bits_to_skip].enforce_equal(cs.ns(|| "enforce highest required bit is zero"), &Boolean::constant(true))?;
 
         Ok(())
     }
