@@ -96,6 +96,8 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         };
 
         let (proof, _) = {
+            // TODO: ideally we'd pass the transcript from the other parts, but the bulletproofs library
+            // is not designed to support it at the moment
             let mut prover_transcript = Transcript::new(b"bp_range_proof");
 
             let mut prover = Prover::new(&pedersen_gens, &mut prover_transcript);
@@ -103,7 +105,9 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
             let value = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.e)?;
             let randomness = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.r_q)?;
             let (com, var) = prover.commit(value, randomness);
-            assert!(range_proof(&mut prover, var.into(), Some(value), self.crs.parameters.hash_to_prime_bits as usize).is_ok());
+            if range_proof(&mut prover, var.into(), Some(value), self.crs.parameters.hash_to_prime_bits as usize).is_err() {
+                return Err(ProofError::CouldNotCreateProof);
+            }
 
             let proof = prover.prove(&self.crs.hash_to_prime_parameters)?;
 
@@ -126,12 +130,16 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
             B_blinding: self.crs.pedersen_commitment_parameters.h,
         };
 
+        // TODO: ideally we'd pass the transcript from the other parts, but the bulletproofs library
+        // is not designed to support it at the moment
         let mut verifier_transcript = Transcript::new(b"bp_range_proof");
         let mut verifier = Verifier::new(&mut verifier_transcript);
 
         let var = verifier.commit(statement.c_e_q.compress());
 
-        assert!(range_proof(&mut verifier, var.into(), None, self.crs.parameters.hash_to_prime_bits as usize).is_ok());
+        if range_proof(&mut verifier, var.into(), None, self.crs.parameters.hash_to_prime_bits as usize).is_err() {
+            return Err(VerificationError::VerificationFailed);
+        }
 
         let proof = prover_channel.receive_proof()?;
         Ok(verifier.verify(&proof, &pedersen_gens, &self.crs.hash_to_prime_parameters)?)
