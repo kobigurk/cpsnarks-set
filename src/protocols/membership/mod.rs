@@ -32,7 +32,12 @@ quick_error! {
 type R1CSError = bulletproofs::r1cs::R1CSError;
 
 #[cfg(feature = "zexe")]
-type R1CSError = std::marker::PhantomData<usize>;
+quick_error! {
+    #[derive(Debug)]
+    pub enum DummyBPError {}
+}
+#[cfg(feature = "zexe")]
+type R1CSError = DummyBPError;
 
 
 quick_error! {
