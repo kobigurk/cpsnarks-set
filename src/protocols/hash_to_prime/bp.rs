@@ -28,10 +28,10 @@ pub fn range_proof<CS: ConstraintSystem>(
     required_bit_size: usize,
 ) -> Result<(), R1CSError> {
     let mut exp_2 = Scalar::one();
+    let bits = v_assignment.map(|q| q.to_bits().into_iter().rev().collect::<Vec<_>>());
     for i in 0..required_bit_size {
         // Create low-level variables and add them to constraints
-        let (a, b, o) = cs.allocate_multiplier(v_assignment.and_then(|q| {
-            let bits = q.to_bits().into_iter().rev().collect::<Vec<_>>();
+        let (a, b, o) = cs.allocate_multiplier(bits.as_ref().and_then(|bits| {
             let bit = if bits[i] { 1 as u64 } else { 0 };
             Some(((1 - bit).into(), bit.into()))
         }))?;
