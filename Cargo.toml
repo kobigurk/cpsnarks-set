@@ -20,10 +20,9 @@ curve25519-dalek = { version = "2", features = ["serde"] }
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.7.6"
 blake2 = "0.7.1"
-spacesuit = { path = "../slingshot/spacesuit", optional = true }
 
 [features]
-dalek = ["bulletproofs", "spacesuit"]
+dalek = ["bulletproofs"]
 zexe = []
 default = ["zexe"]
 
