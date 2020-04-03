@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use rug::Integer;
 use std::cell::RefCell;
-use algebra::bls12_381::{Bls12_381, G1Projective};
+use algebra::{bls12_381::{Bls12_381, G1Projective, Fr}, PrimeField};
 use rand::thread_rng;
 use cpsnarks_set::{
     parameters::Parameters,
@@ -9,7 +9,7 @@ use cpsnarks_set::{
     transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
     protocols::{
         membership::{Protocol, Statement, Witness},
-        hash_to_prime::snark::Protocol as HPProtocol,
+        hash_to_prime::snark_range::Protocol as HPProtocol,
     },
 };
 use rug::rand::RandState;
@@ -38,7 +38,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             (crs.parameters.hash_to_prime_bits)
                 as u32,
         )) - &Integer::from(245);
-    let randomness = Integer::from(5);
+    let randomness = Integer::from(Integer::u_pow_u(
+        2,
+        Fr::size_in_bits() as u32,
+    )).random_below(&mut rng1);
     let commitment = protocol.crs.crs_modeq.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
 
     let accum = accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
@@ -66,7 +69,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
-    c.bench_function("membership protocol", |b| b.iter(|| {
+    c.bench_function("membership_prime protocol", |b| b.iter(|| {
         let proof_transcript = RefCell::new(Transcript::new(b"membership"));
         let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         let statement = Statement {

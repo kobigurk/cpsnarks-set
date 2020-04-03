@@ -252,7 +252,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
         Ok(())
     }
 
-    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError> {
+    pub fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError> {
         let hash_to_prime = HashToPrimeProtocol::from_crs(&self.crs.crs_hash_to_prime);
         hash_to_prime.hash_to_prime(e)
     }
@@ -386,7 +386,6 @@ mod test {
         impl HashToPrimeHashParameters for TestHashToPrimeParameters {
             const MESSAGE_SIZE: u16 = 254;
         }
-
 
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();

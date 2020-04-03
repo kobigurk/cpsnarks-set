@@ -9,7 +9,7 @@ use accumulator::group::{Group, Rsa2048};
 use cpsnarks_set::{
     protocols::{
         root::{Protocol, Statement, Witness},
-        hash_to_prime::snark::Protocol as HPProtocol,
+        hash_to_prime::snark_range::Protocol as HPProtocol,
     },
     parameters::Parameters,
     transcript::root::{TranscriptVerifierChannel, TranscriptProverChannel}

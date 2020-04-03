@@ -35,15 +35,34 @@ bench = false
 [[bench]]
 name = "root"
 harness = false
+required-features = ["zexe"]
 
 [[bench]]
 name = "modeq"
 harness = false
+required-features = ["zexe"]
 
 [[bench]]
 name = "rsa"
 harness = false
+required-features = ["zexe"]
 
 [[bench]]
-name = "membership"
+name = "membership_prime"
 harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "membership_hash"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "membership_class"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "membership_bp"
+harness = false
+required-features = ["dalek"]
