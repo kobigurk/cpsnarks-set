@@ -146,6 +146,7 @@ mod test {
             value: Some(integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12)).unwrap().into()),
         };
         c.generate_constraints(&mut cs).unwrap();
+        println!("num constraints: {}", cs.constraints.len());
         if !cs.is_satisfied() {
             panic!(format!("not satisfied: {}", cs.which_is_unsatisfied().unwrap()));
         }

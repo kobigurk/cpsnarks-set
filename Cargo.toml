@@ -66,3 +66,9 @@ required-features = ["zexe"]
 name = "membership_bp"
 harness = false
 required-features = ["dalek"]
+
+[[bench]]
+name = "snark_range"
+harness = false
+required-features = ["zexe"]
+
