@@ -14,7 +14,7 @@ pub struct IntegerCommitment<G: ConvertibleUnknownOrderGroup> {
 impl<G: ConvertibleUnknownOrderGroup> IntegerCommitment<G> {
     pub fn setup<R: MutRandState>(rng: &mut R) -> IntegerCommitment<G> {
         let upper_bound = G::order_upper_bound();
-        let g = G::elem(Integer::from(upper_bound.clone()).random_below(rng));
+        let g = G::unknown_possibly_random_order_elem(rng);
         let h = G::exp(&g, &upper_bound.random_below(rng));
         IntegerCommitment {
             g,

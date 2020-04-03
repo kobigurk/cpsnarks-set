@@ -280,7 +280,7 @@ mod test {
         protocols::hash_to_prime::snark_hash::{Protocol as HPHashProtocol, HashToPrimeHashParameters},
     };
     use rug::rand::RandState;
-    use accumulator::group::Rsa2048;
+    use accumulator::group::{Rsa2048, ClassGroup};
     use super::{Protocol, Statement, Witness};
     use merlin::Transcript;
     use accumulator::{AccumulatorWithoutHashToPrime, group::Group};
@@ -293,7 +293,7 @@ mod test {
     ];
 
     #[test]
-    fn test_e2e_prime() {
+    fn test_e2e_prime_rsa() {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
@@ -317,6 +317,50 @@ mod test {
         let acc = accum.0.value;
         let w = accum.1.witness.0.value;
         assert_eq!(Rsa2048::exp(&w, &value), acc);
+
+
+        let proof_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
+        let statement = Statement {
+            c_e_q: commitment,
+            c_p: acc,
+        };
+        protocol.prove(&mut verifier_channel, &mut rng1, &mut rng2, &statement, &Witness {
+            e: value,
+            r_q: randomness,
+            w,
+        }).unwrap();
+        let proof = verifier_channel.proof().unwrap();
+        let verification_transcript = RefCell::new(Transcript::new(b"membership"));
+        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+        protocol.verify(&mut prover_channel, &statement).unwrap();
+    }
+
+    #[test]
+    fn test_e2e_prime_class_group() {
+        let params = Parameters::from_security_level(128).unwrap();
+        let mut rng1 = RandState::new();
+        rng1.seed(&Integer::from(13));
+        let mut rng2 = thread_rng();
+
+        let crs = crate::protocols::membership::Protocol::<ClassGroup, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+        let protocol = Protocol::<ClassGroup, G1Projective, HPProtocol<Bls12_381>>::from_crs(&crs);
+
+        let value = Integer::from(Integer::u_pow_u(
+                2,
+                (crs.parameters.hash_to_prime_bits)
+                    as u32,
+            )) - &Integer::from(245);
+        let randomness = Integer::from(5);
+        let commitment = protocol.crs.crs_modeq.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
+
+        let accum = accumulator::Accumulator::<ClassGroup, Integer, AccumulatorWithoutHashToPrime>::empty();
+        let accum = accum.add(&LARGE_PRIMES.iter().skip(1).map(|p| Integer::from(*p)).collect::<Vec<_>>());
+
+        let accum = accum.add_with_proof(&[value.clone()]);
+        let acc = accum.0.value;
+        let w = accum.1.witness.0.value;
+        assert_eq!(ClassGroup::exp(&w, &value), acc);
 
 
         let proof_transcript = RefCell::new(Transcript::new(b"membership"));

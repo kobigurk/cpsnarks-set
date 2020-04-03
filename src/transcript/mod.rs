@@ -49,7 +49,7 @@ impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolInteger<G> for Transcrip
     }
 
     fn append_integer_point(&mut self, label: &'static [u8], point: &G::Elem) {
-        self.append_message(label, &integer_to_bytes(&G::elem_to(point)));
+        self.append_message(label, &G::elem_to_bytes(point));
     }
 }
 

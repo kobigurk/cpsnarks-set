@@ -1,13 +1,13 @@
 use rug::Integer;
 use rug::rand::MutRandState;
 use rug::integer::Order;
-use accumulator::group::{ElemTo, ElemFrom, UnknownOrderGroup};
+use accumulator::group::{ElemToBytes, UnknownOrderGroup};
 
 pub mod curve;
 use curve::{CurvePointProjective, Field};
 
-pub trait ConvertibleUnknownOrderGroup : UnknownOrderGroup + ElemFrom<Integer> + ElemTo<Integer> {}
-impl<T: UnknownOrderGroup + ElemFrom<Integer> + ElemTo<Integer>> ConvertibleUnknownOrderGroup for T {}
+pub trait ConvertibleUnknownOrderGroup : UnknownOrderGroup + ElemToBytes {}
+impl<T: UnknownOrderGroup + ElemToBytes> ConvertibleUnknownOrderGroup for T {}
 
 
 pub fn random_between<R: MutRandState>(rng: &mut R, min: &Integer, max: &Integer) -> Integer {
