@@ -5,7 +5,7 @@ authors = ["Kobi Gurkan <kobigurk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-accumulator = { path = "../accumulator" }
+accumulator = { git = "ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git" }
 quick-error = "1.2.3"
 rug = "1.7.0"
 algebra-core = { git = "https://github.com/scipr-lab/zexe" }
@@ -15,7 +15,7 @@ rand = { version = "0.7" }
 r1cs-core = { git = "https://github.com/scipr-lab/zexe" }
 r1cs-std = { git = "https://github.com/scipr-lab/zexe" }
 crypto-primitives = { git = "https://github.com/scipr-lab/zexe", features = ["r1cs"]}
-legogro16 = { path = "../legogro16" }
+legogro16 = { git = "ssh://git@github.com/kobigurk/legogro16.git" }
 curve25519-dalek = { version = "2", optional = true, features = ["serde", "simd_backend"] }
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.7.6"
@@ -71,4 +71,3 @@ required-features = ["dalek"]
 name = "snark_range"
 harness = false
 required-features = ["zexe"]
-

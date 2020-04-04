@@ -1,0 +1,14 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/rust:1.42.0
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "98:25:7d:11:f9:5c:62:91:0b:f0:10:e1:93:35:30:65"
+      - checkout
+      - run: cargo test --release
+      - run: rustup install nightly
+      - run: cargo +nightly test --no-default-features --features dalek
+
