@@ -34,7 +34,7 @@ impl<E: PairingEngine> ConstraintSynthesizer<E::Fr>  for HashToPrimeCircuit<E> {
     ) -> Result<(), SynthesisError> {
         let f = FpGadget::alloc_input(cs.ns( || "alloc value"),|| self.value.get())?;
         // big-endian bits
-        let bits = f.to_bits_strict(cs.ns(|| "to bits"))?;
+        let bits = f.to_non_unique_bits(cs.ns(|| "to bits"))?;
         let modulus_bits = E::Fr::size_in_bits();
         let bits_to_skip = modulus_bits - self.required_bit_size as usize;
         for (i, b) in bits[..bits_to_skip].iter().enumerate() {

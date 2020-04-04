@@ -8,14 +8,14 @@ edition = "2018"
 accumulator = { path = "../accumulator" }
 quick-error = "1.2.3"
 rug = "1.7.0"
-algebra-core = { path = "../zexe/algebra-core" }
-algebra = { path = "../zexe/algebra", features = ["bls12_381"]}
+algebra-core = { git = "https://github.com/scipr-lab/zexe" }
+algebra = { git = "https://github.com/scipr-lab/zexe", features = ["bls12_381"]}
 merlin = "2.0.0"
 rand = { version = "0.7" }
-r1cs-core = { path = "../zexe/r1cs-core" }
-r1cs-std = { path = "../zexe/r1cs-std" }
-crypto-primitives = { path = "../zexe/crypto-primitives", features = ["r1cs"]}
-legogro16 = { path = "../zexe/legogro16" }
+r1cs-core = { git = "https://github.com/scipr-lab/zexe" }
+r1cs-std = { git = "https://github.com/scipr-lab/zexe" }
+crypto-primitives = { git = "https://github.com/scipr-lab/zexe", features = ["r1cs"]}
+legogro16 = { path = "../legogro16" }
 curve25519-dalek = { version = "2", optional = true, features = ["serde", "simd_backend"] }
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.7.6"
