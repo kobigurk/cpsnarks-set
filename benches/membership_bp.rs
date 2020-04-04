@@ -33,7 +33,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     rng1.seed(&Integer::from(13));
     let mut rng2 = thread_rng();
 
-    let crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
+    let mut crs = cpsnarks_set::protocols::membership::Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::setup(&params, &mut rng1, &mut rng2).unwrap().crs;
     let protocol = Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::from_crs(&crs);
 
     let value = Integer::from(Integer::u_pow_u(
@@ -54,6 +54,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
 
     let proof_transcript = RefCell::new(Transcript::new(b"membership"));
+    crs.crs_hash_to_prime.hash_to_prime_parameters.transcript = Some(proof_transcript.clone());
     let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
         c_e_q: commitment.clone(),
@@ -66,11 +67,13 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     }).unwrap();
     let proof = verifier_channel.proof().unwrap();
     let verification_transcript = RefCell::new(Transcript::new(b"membership"));
+    crs.crs_hash_to_prime.hash_to_prime_parameters.transcript = Some(verification_transcript.clone());
     let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
     c.bench_function("membership_bp protocol", |b| b.iter(|| {
         let proof_transcript = RefCell::new(Transcript::new(b"membership"));
+        crs.crs_hash_to_prime.hash_to_prime_parameters.transcript = Some(proof_transcript.clone());
         let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
         let statement = Statement {
             c_e_q: commitment.clone(),

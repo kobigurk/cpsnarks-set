@@ -20,6 +20,7 @@ use crate::{
 use rand::Rng;
 use rug::Integer;
 use merlin::Transcript;
+use std::cell::RefCell;
 
 pub fn range_proof<CS: ConstraintSystem>(
     cs: &mut CS,
@@ -65,9 +66,21 @@ pub struct Protocol {
     pub crs: CRSHashToPrime<RistrettoPoint, Self>,
 }
 
+#[derive(Clone)]
+pub struct BPParameters {
+    pub bulletproof_gens: BulletproofGens,
+    pub transcript: Option<RefCell<Transcript>>,
+}
+
+impl<'a> BPParameters {
+    pub fn set_transcript(&mut self, transcript: &RefCell<Transcript>) {
+        self.transcript = Some(transcript.clone());
+    }
+}
+
 impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
     type Proof = R1CSProof;
-    type Parameters = BulletproofGens;
+    type Parameters = BPParameters;
 
     fn from_crs(
         crs: &CRSHashToPrime<RistrettoPoint, Self>
@@ -79,7 +92,10 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
 
     fn setup<R: Rng>(_: &mut R, _: &PedersenCommitment<RistrettoPoint>, parameters: &Parameters) -> Result<Self::Parameters, SetupError> {
         let rounded_hash_to_prime_bits = 1 << log2(parameters.hash_to_prime_bits as usize);
-        Ok(BulletproofGens::new(rounded_hash_to_prime_bits, 1))
+        Ok(BPParameters {
+            bulletproof_gens: BulletproofGens::new(rounded_hash_to_prime_bits, 1),
+            transcript: None,
+        })
     }
 
     fn prove<R: Rng, C: HashToPrimeVerifierChannel<RistrettoPoint, Self>>(
@@ -96,11 +112,16 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         };
 
         let (proof, _) = {
-            // TODO: ideally we'd pass the transcript from the other parts, but the bulletproofs library
-            // is not designed to support it at the moment
-            let mut prover_transcript = Transcript::new(b"bp_range_proof");
+            let default_transcript = RefCell::new(Transcript::new(b"bp_range_proof"));
+            let prover_transcript = if self.crs.hash_to_prime_parameters.transcript.is_some() {
+                    self.crs.hash_to_prime_parameters.transcript.as_ref().unwrap()
+                } else { 
+                    &default_transcript
+                };
 
-            let mut prover = Prover::new(&pedersen_gens, &mut prover_transcript);
+            let mut prover_transcript = prover_transcript.try_borrow_mut().map_err(|_| ProofError::CouldNotCreateProof)?;
+
+            let mut prover = Prover::new(&pedersen_gens, &mut *prover_transcript);
 
             let value = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.e)?;
             let randomness = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.r_q)?;
@@ -109,7 +130,7 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
                 return Err(ProofError::CouldNotCreateProof);
             }
 
-            let proof = prover.prove(&self.crs.hash_to_prime_parameters)?;
+            let proof = prover.prove(&self.crs.hash_to_prime_parameters.bulletproof_gens)?;
 
             (proof, com)
         };
@@ -130,10 +151,15 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
             B_blinding: self.crs.pedersen_commitment_parameters.h,
         };
 
-        // TODO: ideally we'd pass the transcript from the other parts, but the bulletproofs library
-        // is not designed to support it at the moment
-        let mut verifier_transcript = Transcript::new(b"bp_range_proof");
-        let mut verifier = Verifier::new(&mut verifier_transcript);
+        let default_transcript = RefCell::new(Transcript::new(b"bp_range_proof"));
+        let verifier_transcript = if self.crs.hash_to_prime_parameters.transcript.is_some() {
+                self.crs.hash_to_prime_parameters.transcript.as_ref().unwrap()
+            } else { 
+                &default_transcript
+            };
+
+        let mut verifier_transcript = verifier_transcript.try_borrow_mut().map_err(|_| VerificationError::VerificationFailed)?;
+        let mut verifier = Verifier::new(&mut *verifier_transcript);
 
         let var = verifier.commit(statement.c_e_q.compress());
 
@@ -142,7 +168,7 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         }
 
         let proof = prover_channel.receive_proof()?;
-        Ok(verifier.verify(&proof, &pedersen_gens, &self.crs.hash_to_prime_parameters)?)
+        Ok(verifier.verify(&proof, &pedersen_gens, &self.crs.hash_to_prime_parameters.bulletproof_gens)?)
     }
 
     fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
