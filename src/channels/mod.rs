@@ -1,7 +1,9 @@
 pub mod root;
+pub mod coprime;
 pub mod modeq;
 pub mod hash_to_prime;
 pub mod membership;
+pub mod nonmembership;
 
 use std::cell::{BorrowError, BorrowMutError};
 

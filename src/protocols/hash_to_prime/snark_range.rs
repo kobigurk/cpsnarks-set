@@ -15,7 +15,7 @@ use crate::{
     utils::{integer_to_bigint_mod_q},
     protocols::{
         hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness, HashToPrimeError},
-        membership::{SetupError, ProofError, VerificationError},
+        SetupError, ProofError, VerificationError,
     }
 };
 use rand::Rng;

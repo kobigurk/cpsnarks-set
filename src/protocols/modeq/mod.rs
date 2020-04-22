@@ -7,7 +7,7 @@ use crate::{
         bigint_to_integer, integer_mod_q, random_symmetric_range, ConvertibleUnknownOrderGroup, integer_to_bigint_mod_q,
         curve::{Field, CurvePointProjective},
     },
-    protocols::membership::{ProofError, VerificationError},
+    protocols::{ProofError, VerificationError},
     channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
 };
 use rand::{RngCore, CryptoRng};

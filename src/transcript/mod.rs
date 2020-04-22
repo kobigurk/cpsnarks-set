@@ -7,9 +7,11 @@ use crate::utils::{
 use rug::integer::Order;
 
 pub mod root;
+pub mod coprime;
 pub mod modeq;
 pub mod hash_to_prime;
 pub mod membership;
+pub mod nonmembership;
 
 pub use root::TranscriptProtocolRoot;
 pub use modeq::TranscriptProtocolModEq;

@@ -3,7 +3,7 @@
 [[package]]
 name = "accumulator"
 version = "0.2.1"
-source = "git+ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git#20eab6552adf16cda46ec547d9c045aee47e7f4a"
+source = "git+ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git#60f35b4862fcb89b35abe00d62e21e555a90a8ce"
 dependencies = [
  "arrayref 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2-rfc 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",

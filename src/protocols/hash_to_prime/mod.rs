@@ -2,7 +2,7 @@ use rand::{RngCore, CryptoRng};
 use crate::{
     parameters::Parameters,
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-    protocols::membership::{SetupError, ProofError, VerificationError},
+    protocols::{SetupError, ProofError, VerificationError},
     commitments::{
         Commitment,
         pedersen::PedersenCommitment

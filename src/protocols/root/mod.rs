@@ -5,7 +5,7 @@ use crate::{
         Commitment,
         integer::IntegerCommitment,
     },
-    protocols::membership::{ProofError, VerificationError},
+    protocols::{ProofError, VerificationError},
     channels::root::{RootProverChannel, RootVerifierChannel},
 };
 use rug::Integer;
