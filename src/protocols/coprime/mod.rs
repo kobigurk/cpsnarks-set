@@ -5,7 +5,7 @@ use crate::{
         Commitment,
         integer::IntegerCommitment,
     },
-    protocols::{ProofError, VerificationError},
+    protocols::{CRSError, ProofError, VerificationError},
     channels::coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
 };
 use rug::Integer;
@@ -32,7 +32,6 @@ pub struct Witness<G: ConvertibleUnknownOrderGroup> {
 #[derive(Clone)]
 pub struct Message1<G: ConvertibleUnknownOrderGroup> {
     pub c_a: G::Elem,
-    pub c_b: <IntegerCommitment<G> as Commitment>::Instance,
     pub c_r_a: <IntegerCommitment<G> as Commitment>::Instance,
     pub c_b_cap: <IntegerCommitment<G> as Commitment>::Instance,
     pub c_rho_b_cap: <IntegerCommitment<G> as Commitment>::Instance,
@@ -40,7 +39,6 @@ pub struct Message1<G: ConvertibleUnknownOrderGroup> {
 
 #[derive(Clone)]
 pub struct Message2<G: ConvertibleUnknownOrderGroup> {
-    pub alpha1: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha2: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha3: <IntegerCommitment<G> as Commitment>::Instance,
     pub alpha4: <IntegerCommitment<G> as Commitment>::Instance,
@@ -53,7 +51,6 @@ pub struct Message2<G: ConvertibleUnknownOrderGroup> {
 pub struct Message3 {
     pub s_b: Integer,
     pub s_e: Integer,
-    pub s_rho_b: Integer,
     pub s_rho_b_cap: Integer,
     pub s_r: Integer,
     pub s_r_a: Integer,
@@ -77,10 +74,14 @@ pub struct Protocol<G: ConvertibleUnknownOrderGroup> {
 impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
     pub fn from_crs(
         crs: &CRSCoprime<G>
-    ) -> Protocol<G> {
-        Protocol {
-            crs: crs.clone(),
+    ) -> Result<Protocol<G>, CRSError> {
+        let modulus = G::rsa_modulus().map_err(|_| CRSError::InvalidParameters)?;
+        if crs.parameters.security_soundness + 1 >= crs.parameters.hash_to_prime_bits || crs.parameters.security_soundness >= modulus/2 {
+            return Err(CRSError::InvalidParameters);
         }
+        Ok(Protocol {
+            crs: crs.clone(),
+        })
     }
 
     pub fn prove<R: MutRandState, C: CoprimeVerifierChannel<G>>(
@@ -93,12 +94,10 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
     {
         let r_a = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
         let r_a_prime = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
-        let rho_b = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
         let rho_b_cap = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
         let rho_b_cap_prime = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
         let c_a = G::op(&witness.d, &G::exp(&self.crs.integer_commitment_parameters.h, &r_a));
         let c_r_a = self.crs.integer_commitment_parameters.commit(&r_a, &r_a_prime)?;
-        let c_b = self.crs.integer_commitment_parameters.commit(&witness.b, &rho_b)?;
         let integer_commitment_c_b_cap = IntegerCommitment::<G>::new(
             &statement.acc,
             &self.crs.integer_commitment_parameters.h,
@@ -106,7 +105,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let c_b_cap = integer_commitment_c_b_cap.commit(&witness.b, &rho_b_cap)?;
         let c_rho_b_cap = self.crs.integer_commitment_parameters.commit(&rho_b_cap, &rho_b_cap_prime)?;
 
-        let message1 = Message1::<G> { c_a, c_b, c_r_a, c_b_cap, c_rho_b_cap };
+        let message1 = Message1::<G> { c_a, c_r_a, c_b_cap, c_rho_b_cap };
         verifier_channel.send_message1(&message1)?;
 
         let r_b_e_range = Integer::from(Integer::u_pow_u(
@@ -126,7 +125,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
                     as u32,
             )),
         );
-        let r_rho_b = random_symmetric_range(rng, &r_r_range);
         let r_rho_b_cap = random_symmetric_range(rng, &r_r_range);
         let r_r = random_symmetric_range(rng, &r_r_range);
         let r_r_a = random_symmetric_range(rng, &r_r_range);
@@ -146,7 +144,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_beta = random_symmetric_range(rng, &r_beta_delta_range);
         let r_delta = random_symmetric_range(rng, &r_beta_delta_range);
 
-        let alpha1 = self.crs.integer_commitment_parameters.commit(&r_b, &r_rho_b)?;
         let alpha2 = integer_commitment_c_b_cap.commit(&r_b, &r_rho_b_cap)?;
         let alpha3 = self.crs.integer_commitment_parameters.commit(&r_e, &r_r)?;
         let alpha4 = self.crs.integer_commitment_parameters.commit(&r_r_a, &r_r_a_prime)?;
@@ -164,7 +161,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let alpha7 = self.crs.integer_commitment_parameters.commit(&r_rho_b_cap, &r_rho_b_cap_prime)?;
 
         let message2 = Message2::<G> {
-            alpha1,
             alpha2,
             alpha3,
             alpha4,
@@ -177,7 +173,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let c = verifier_channel.receive_challenge()?;
         let s_b = r_b.clone() - c.clone() * witness.b.clone();
         let s_e = r_e - c.clone() * witness.e.clone();
-        let s_rho_b = r_rho_b - c.clone() * rho_b.clone();
         let s_rho_b_cap = r_rho_b_cap - c.clone() * rho_b_cap.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
         let s_r_a = r_r_a.clone() - c.clone() * r_a.clone();
@@ -188,7 +183,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let message3 = Message3 {
             s_b,
             s_e,
-            s_rho_b,
             s_rho_b_cap,
             s_r,
             s_r_a,
@@ -212,10 +206,6 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let message2 = prover_channel.receive_message2()?;
         let c = prover_channel.generate_and_send_challenge()?;
         let message3 = prover_channel.receive_message3()?;
-        let expected_alpha1 = G::op(
-            &G::exp(&message1.c_b, &c),
-            &self.crs.integer_commitment_parameters.commit(&message3.s_b, &message3.s_rho_b)?
-        );
         let integer_commitment_alpha2 = IntegerCommitment::<G>::new(
             &statement.acc,
             &self.crs.integer_commitment_parameters.h,
@@ -262,8 +252,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
         let is_s_e_in_range = message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
 
-        if expected_alpha1 == message2.alpha1 &&
-            expected_alpha2 == message2.alpha2 &&
+        if expected_alpha2 == message2.alpha2 &&
             expected_alpha3 == message2.alpha3 &&
             expected_alpha4 == message2.alpha4 &&
             expected_alpha5 == message2.alpha5 &&
@@ -309,7 +298,7 @@ mod test {
         let mut rng2 = thread_rng();
 
         let crs = crate::protocols::nonmembership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_coprime;
-        let protocol = Protocol::<Rsa2048>::from_crs(&crs);
+        let protocol = Protocol::<Rsa2048>::from_crs(&crs).unwrap();
 
         let value = Integer::from(LARGE_PRIMES[0]);
         let randomness = Integer::from(5);

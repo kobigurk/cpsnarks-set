@@ -11,6 +11,13 @@ pub mod nonmembership;
 
 quick_error! {
     #[derive(Debug)]
+    pub enum CRSError {
+        InvalidParameters {}
+    }
+}
+
+quick_error! {
+    #[derive(Debug)]
     pub enum SetupError {
         CouldNotPerformSetup {}
         SNARKError(err: SynthesisError) {
@@ -18,7 +25,6 @@ quick_error! {
         }
     }
 }
-
 
 #[cfg(feature = "dalek")]
 type R1CSError = bulletproofs::r1cs::R1CSError;
@@ -54,6 +60,9 @@ quick_error! {
         BPError(err: R1CSError) {
             from()
         }
+        CRSInitError(err: CRSError) {
+            from()
+        }
     }
 }
 
@@ -74,6 +83,9 @@ quick_error! {
             from()
         }
         BPError(err: R1CSError) {
+            from()
+        }
+        CRSInitError(err: CRSError) {
             from()
         }
     }

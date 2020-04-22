@@ -59,7 +59,6 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
         transcript.append_integer_point(b"c_a", &message.c_a);
-        transcript.append_integer_point(b"c_b", &message.c_b);
         transcript.append_integer_point(b"c_r_a", &message.c_r_a);
         transcript.append_integer_point(b"c_b_cap", &message.c_b_cap);
         transcript.append_integer_point(b"c_rho_b_cap", &message.c_rho_b_cap);
@@ -69,7 +68,6 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
     fn send_message2(&mut self, message: &Message2<G>) -> Result<(), ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
-        transcript.append_integer_point(b"alpha1", &message.alpha1);
         transcript.append_integer_point(b"alpha2", &message.alpha2);
         transcript.append_integer_point(b"alpha3", &message.alpha3);
         transcript.append_integer_point(b"alpha4", &message.alpha4);
@@ -111,7 +109,6 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
         transcript.append_integer_point(b"c_a", &self.proof.message1.c_a);
-        transcript.append_integer_point(b"c_b", &self.proof.message1.c_b);
         transcript.append_integer_point(b"c_r_a", &self.proof.message1.c_r_a);
         transcript.append_integer_point(b"c_b_cap", &self.proof.message1.c_b_cap);
         transcript.append_integer_point(b"c_rho_b_cap", &self.proof.message1.c_rho_b_cap);
@@ -120,7 +117,6 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
     fn receive_message2(&mut self) -> Result<Message2<G>, ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
-        transcript.append_integer_point(b"alpha1", &self.proof.message2.alpha1);
         transcript.append_integer_point(b"alpha2", &self.proof.message2.alpha2);
         transcript.append_integer_point(b"alpha3", &self.proof.message2.alpha3);
         transcript.append_integer_point(b"alpha4", &self.proof.message2.alpha4);

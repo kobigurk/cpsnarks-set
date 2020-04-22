@@ -83,17 +83,7 @@ harness = false
 required-features = ["zexe"]
 
 [[bench]]
-name = "nonmembership_prime_60"
-harness = false
-required-features = ["zexe"]
-
-[[bench]]
 name = "nonmembership_hash"
-harness = false
-required-features = ["zexe"]
-
-[[bench]]
-name = "nonmembership_class"
 harness = false
 required-features = ["zexe"]
 

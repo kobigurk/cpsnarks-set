@@ -129,7 +129,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
             &r,
         )?;
         verifier_channel.send_c_e(&c_e)?;
-        let coprime = CoprimeProtocol::from_crs(&self.crs.crs_coprime);
+        let coprime = CoprimeProtocol::from_crs(&self.crs.crs_coprime)?;
         coprime.prove(verifier_channel, rng1, &CoprimeStatement {
             c_e: c_e.clone(),
             acc: statement.c_p.clone(),
@@ -166,7 +166,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
     ) -> Result<(), VerificationError>
     {
         let c_e = prover_channel.receive_c_e()?;
-        let coprime = CoprimeProtocol::from_crs(&self.crs.crs_coprime);
+        let coprime = CoprimeProtocol::from_crs(&self.crs.crs_coprime)?;
         coprime.verify(prover_channel, &CoprimeStatement {
             c_e: c_e.clone(),
             acc: statement.c_p.clone(),
@@ -271,7 +271,9 @@ mod test {
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 
+    // panics because coprime is not supported for class groups right now
     #[test]
+    #[should_panic]
     fn test_e2e_prime_class_group() {
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
