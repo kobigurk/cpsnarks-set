@@ -62,7 +62,7 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
         transcript.append_integer_point(b"c_b", &message.c_b);
         transcript.append_integer_point(b"c_r_a", &message.c_r_a);
         transcript.append_integer_point(b"c_b_cap", &message.c_b_cap);
-        transcript.append_integer_point(b"c_rho_b", &message.c_rho_b);
+        transcript.append_integer_point(b"c_rho_b_cap", &message.c_rho_b_cap);
         self.message1 = Some(message.clone());
         Ok(())
     }
@@ -114,7 +114,7 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
         transcript.append_integer_point(b"c_b", &self.proof.message1.c_b);
         transcript.append_integer_point(b"c_r_a", &self.proof.message1.c_r_a);
         transcript.append_integer_point(b"c_b_cap", &self.proof.message1.c_b_cap);
-        transcript.append_integer_point(b"c_rho_b", &self.proof.message1.c_rho_b);
+        transcript.append_integer_point(b"c_rho_b_cap", &self.proof.message1.c_rho_b_cap);
         Ok(self.proof.message1.clone())
     }
     fn receive_message2(&mut self) -> Result<Message2<G>, ChannelError> {

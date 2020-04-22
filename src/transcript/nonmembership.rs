@@ -77,9 +77,9 @@ impl<
         if self.c_e.is_some() {
             Ok(Proof {
                 c_e: self.c_e.as_ref().unwrap().clone(),
-                proof_coprime: proof_coprime,
-                proof_modeq: proof_modeq,
-                proof_hash_to_prime: proof_hash_to_prime,
+                proof_coprime,
+                proof_modeq,
+                proof_hash_to_prime,
             })
         } else {
             Err(TranscriptChannelError::Incomplete)

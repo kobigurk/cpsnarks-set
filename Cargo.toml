@@ -53,6 +53,11 @@ harness = false
 required-features = ["zexe"]
 
 [[bench]]
+name = "nonmembership_prime"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
 name = "membership_hash"
 harness = false
 required-features = ["zexe"]
@@ -76,3 +81,23 @@ required-features = ["zexe"]
 name = "membership_prime_60"
 harness = false
 required-features = ["zexe"]
+
+[[bench]]
+name = "nonmembership_prime_60"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "nonmembership_hash"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "nonmembership_class"
+harness = false
+required-features = ["zexe"]
+
+[[bench]]
+name = "nonmembership_bp"
+harness = false
+required-features = ["dalek"]
