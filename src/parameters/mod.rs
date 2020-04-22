@@ -1,4 +1,5 @@
 use crate::utils::curve::Field;
+use std::fmt;
 
 #[derive(Clone, Debug)]
 pub struct Parameters {
@@ -7,6 +8,18 @@ pub struct Parameters {
     pub security_soundness: u16,
     pub hash_to_prime_bits: u16, // μ
     pub field_size_bits: u16, // ν
+}
+
+impl fmt::Display for Parameters {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Parameters(𝜆={} (security level), 𝜆_s={} (soundness security), 𝜆_z={} (zero-knowledge security), μ={} (hash-to-prime/range bits), ν={} (field size bits)", 
+            self.security_level,
+            self.security_zk,
+            self.security_soundness,
+            self.hash_to_prime_bits,
+            self.field_size_bits,
+        )
+    }
 }
 
 quick_error! {

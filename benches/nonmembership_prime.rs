@@ -25,7 +25,8 @@ const LARGE_PRIMES: [u64; 3] = [
 
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let params = Parameters::from_security_level(128).unwrap();
+    let params = Parameters::from_curve::<Fr>().unwrap().0;
+    println!("params: {}", params);
     let mut rng1 = RandState::new();
     rng1.seed(&Integer::from(13));
     let mut rng2 = thread_rng();

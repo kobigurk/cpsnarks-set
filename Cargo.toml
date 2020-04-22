@@ -83,6 +83,11 @@ harness = false
 required-features = ["zexe"]
 
 [[bench]]
+name = "membership_bp_60"
+harness = false
+required-features = ["dalek"]
+
+[[bench]]
 name = "nonmembership_hash"
 harness = false
 required-features = ["zexe"]
