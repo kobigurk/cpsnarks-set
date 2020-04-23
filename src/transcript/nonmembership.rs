@@ -1,7 +1,6 @@
 use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 use crate::{
     channels::{
-        hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
         nonmembership::{NonMembershipProverChannel, NonMembershipVerifierChannel},
         ChannelError,
     },
@@ -22,14 +21,15 @@ use crate::{
                 TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
                 TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
             },
-        }
-    },
-    transcript::{
-        hash_to_prime::{
-            TranscriptProtocolHashToPrime,
-            TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
-            TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
         },
+        hash_to_prime::{
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
+            transcript::{
+                TranscriptProtocolHashToPrime,
+                TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
+                TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
+            },
+        }
     },
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };

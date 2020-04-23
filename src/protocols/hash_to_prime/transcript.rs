@@ -1,10 +1,10 @@
-use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve};
 use crate::{
-    channels::{
-        hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-        ChannelError,
+    transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve},
+    channels::ChannelError,
+    protocols::hash_to_prime::{
+        CRSHashToPrime, HashToPrimeProtocol,
+        channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     },
-    protocols::hash_to_prime::{CRSHashToPrime, HashToPrimeProtocol},
     utils::curve::CurvePointProjective,
 };
 use merlin::Transcript;

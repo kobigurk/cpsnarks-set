@@ -1,5 +1,4 @@
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::{pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{ProofError, SetupError, VerificationError},
@@ -7,6 +6,10 @@ use crate::{
 };
 use rand::{CryptoRng, RngCore};
 use rug::Integer;
+use channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel};
+
+pub mod channel;
+pub mod transcript;
 
 #[cfg(feature = "zexe")]
 pub mod snark_hash;

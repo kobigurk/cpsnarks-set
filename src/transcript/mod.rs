@@ -5,17 +5,16 @@ use crate::{
     protocols::{
         root::transcript::TranscriptProtocolRoot,
         modeq::transcript::TranscriptProtocolModEq,
+        hash_to_prime::transcript::TranscriptProtocolHashToPrime,
     },
 };
 use merlin::Transcript;
 use rug::integer::Order;
 use rug::Integer;
 
-pub mod hash_to_prime;
 pub mod membership;
 pub mod nonmembership;
 
-pub use hash_to_prime::TranscriptProtocolHashToPrime;
 pub use membership::TranscriptProtocolMembership;
 
 quick_error! {
