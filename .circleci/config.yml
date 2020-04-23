@@ -14,5 +14,3 @@ jobs:
       - run: cargo +nightly test --no-default-features --features dalek
       - run: cargo fmt --all -- --check
       - run: cargo clippy --release --all-targets --all-features -- -D warnings
-
-
