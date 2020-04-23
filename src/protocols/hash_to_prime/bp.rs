@@ -1,10 +1,10 @@
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
         },
         ProofError, SetupError, VerificationError,
     },
@@ -210,8 +210,10 @@ mod tests {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::{bp::Protocol as HPProtocol, HashToPrimeProtocol},
-        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::{
+            bp::Protocol as HPProtocol, HashToPrimeProtocol,
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::group::Rsa2048;
     use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
