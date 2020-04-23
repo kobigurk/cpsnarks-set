@@ -62,7 +62,12 @@ We've modifies librustzcash to get benchmarks for Merkle tree-based membership p
 
 ## License
 
-The library is licensed under [Apache License Version 2.0](LICENSE).
+This code is licensed under either of the following licenses, at your discretion.
+
+ * [Apache License Version 2.0](LICENSE-APACHE)
+ * [MIT License](LICENSE-MIT)
+
+Unless you explicitly state otherwise, any contribution that you submit to this library shall be dual licensed as above (as defined in the Apache v2 License), without any additional terms or conditions.
 
 ## Reference paper
 
