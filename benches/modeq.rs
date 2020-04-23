@@ -50,7 +50,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
         c_e: commitment1.clone(),
-        c_e_q: commitment2.clone(),
+        c_e_q: commitment2,
     };
     protocol
         .prove(
@@ -80,7 +80,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
             let statement = Statement {
                 c_e: commitment1.clone(),
-                c_e_q: commitment2.clone(),
+                c_e_q: commitment2,
             };
             protocol
                 .prove(

@@ -70,7 +70,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     let acc = accum.value;
     let d = non_mem_proof.d.clone();
-    let b = non_mem_proof.b.clone();
+    let b = non_mem_proof.b;
     assert_eq!(
         Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
         protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -79,7 +79,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let proof_transcript = RefCell::new(Transcript::new(b"nonmembership"));
     let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
-        c_e_q: commitment.clone(),
+        c_e_q: commitment,
         c_p: acc.clone(),
     };
     protocol
@@ -106,7 +106,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let proof_transcript = RefCell::new(Transcript::new(b"nonmembership"));
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
             let statement = Statement {
-                c_e_q: commitment.clone(),
+                c_e_q: commitment,
                 c_p: acc.clone(),
             };
             protocol

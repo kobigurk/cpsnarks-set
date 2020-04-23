@@ -50,7 +50,7 @@ impl Parameters {
             security_level,
             security_zk: security_level - 3,
             security_soundness: security_level - 2,
-            field_size_bits: field_size_bits,
+            field_size_bits,
             hash_to_prime_bits: 2 * security_level - 2,
         };
 
