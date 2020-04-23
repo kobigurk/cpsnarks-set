@@ -72,7 +72,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     crs.crs_hash_to_prime.hash_to_prime_parameters.transcript = Some(proof_transcript.clone());
     let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
-        c_e_q: commitment.clone(),
+        c_e_q: commitment,
         c_p: acc.clone(),
     };
     protocol
@@ -102,7 +102,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 Some(proof_transcript.clone());
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
             let statement = Statement {
-                c_e_q: commitment.clone(),
+                c_e_q: commitment,
                 c_p: acc.clone(),
             };
             protocol

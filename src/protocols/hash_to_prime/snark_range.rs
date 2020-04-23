@@ -163,11 +163,7 @@ mod test {
         let mut cs = TestConstraintSystem::<Fr>::new();
         let c = HashToPrimeCircuit::<Bls12_381> {
             required_bit_size: 4,
-            value: Some(
-                integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12))
-                    .unwrap()
-                    .into(),
-            ),
+            value: Some(integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12)).unwrap()),
         };
         c.generate_constraints(&mut cs).unwrap();
         println!("num constraints: {}", cs.constraints.len());

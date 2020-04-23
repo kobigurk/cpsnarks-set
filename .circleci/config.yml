@@ -10,5 +10,9 @@ jobs:
       - checkout
       - run: cargo test --release
       - run: rustup install nightly
+      - run: rustup component add clippy
+      - run: rustup component add clippy --toolchain nightly
       - run: cargo +nightly test --no-default-features --features dalek
-
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --release --all-targets -- -D warnings
+      - run: cargo +nightly clippy --release --all-targets --no-default-features --features dalek -- -D warnings

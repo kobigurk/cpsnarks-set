@@ -112,12 +112,12 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
                 },
                 crs_coprime: CRSCoprime::<G> {
                     parameters: parameters.clone(),
-                    integer_commitment_parameters: integer_commitment_parameters.clone(),
+                    integer_commitment_parameters,
                 },
                 crs_hash_to_prime: CRSHashToPrime::<P, HP> {
                     parameters: parameters.clone(),
-                    pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
-                    hash_to_prime_parameters: hash_to_prime_parameters.clone(),
+                    pedersen_commitment_parameters,
+                    hash_to_prime_parameters,
                 },
             },
         })
@@ -167,12 +167,12 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
             rng1,
             rng2,
             &ModEqStatement {
-                c_e: c_e.clone(),
+                c_e,
                 c_e_q: statement.c_e_q.clone(),
             },
             &ModEqWitness {
-                e: hashed_e.clone(),
-                r: r.clone(),
+                e: hashed_e,
+                r,
                 r_q: witness.r_q.clone(),
             },
         )?;
@@ -215,7 +215,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
         modeq.verify(
             prover_channel,
             &ModEqStatement {
-                c_e: c_e.clone(),
+                c_e,
                 c_e_q: statement.c_e_q.clone(),
             },
         )?;
@@ -311,7 +311,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -389,7 +389,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             ClassGroup::op(&ClassGroup::exp(&d, &value), &ClassGroup::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -447,7 +447,7 @@ mod test {
             HPHashProtocol<Bls12_381, TestHashToPrimeParameters>,
         >::from_crs(&crs);
 
-        let value = Integer::from(24928329);
+        let value = Integer::from(24_928_329);
         let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
         let randomness = Integer::from(5);
         let commitment = protocol
@@ -472,7 +472,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &hashed_value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -561,20 +561,23 @@ mod test {
 
         let accum =
             accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
-        let accum = accum.add(
-            &LARGE_PRIMES
-                .iter()
-                .skip(1)
-                .map(|p| Integer::from(*p))
-                .collect::<Vec<_>>(),
-        );
+        let acc_set = LARGE_PRIMES
+            .iter()
+            .skip(1)
+            .map(|p| Integer::from(*p))
+            .collect::<Vec<_>>();
+        let accum = accum.add(&acc_set);
+
+        let non_mem_proof = accum
+            .prove_nonmembership(&acc_set, &[value.clone()])
+            .unwrap();
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
-            protocol.crs.integer_commitment_parameters.g
+            protocol.crs.crs_modeq.integer_commitment_parameters.g
         );
 
         let proof_transcript = RefCell::new(Transcript::new(b"nonmembership"));

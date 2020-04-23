@@ -121,7 +121,7 @@ mod dalek {
             let little_endian_bytes = self.to_bytes();
             let big_endian_bytes = little_endian_bytes
                 .iter()
-                .map(|x| *x)
+                .copied()
                 .rev()
                 .collect::<Vec<_>>();
             bytes_big_endian_to_bits_big_endian(&big_endian_bytes)

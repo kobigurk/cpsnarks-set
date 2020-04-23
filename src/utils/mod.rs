@@ -70,8 +70,7 @@ pub fn integer_to_bigint_mod_q<P: CurvePointProjective>(
 
 pub fn bigint_to_bytes<P: CurvePointProjective>(num: &P::ScalarField) -> Vec<u8> {
     let bits = num.to_bits();
-    let bytes = bits_big_endian_to_bytes_big_endian(&bits);
-    bytes
+    bits_big_endian_to_bytes_big_endian(&bits)
 }
 
 pub fn bytes_to_integer(bytes: &[u8]) -> Integer {
@@ -104,7 +103,7 @@ mod test {
 
     #[test]
     fn test_back_and_forth() {
-        let int = Integer::from(2493823);
+        let int = Integer::from(2_493_823);
         let big = integer_to_bigint::<G1Projective>(&int);
         let int2 = bigint_to_integer::<G1Projective>(&big);
         assert_eq!(int, int2);
