@@ -1,10 +1,7 @@
-use rand::{RngCore, CryptoRng};
-use crate::commitments::{CommitmentError, Commitment};
+use crate::commitments::{Commitment, CommitmentError};
+use crate::utils::{curve::CurvePointProjective, integer_to_bigint};
+use rand::{CryptoRng, RngCore};
 use rug::Integer;
-use crate::utils::{
-    integer_to_bigint,
-    curve::CurvePointProjective,
-};
 
 #[derive(Clone)]
 pub struct PedersenCommitment<P: CurvePointProjective> {
@@ -26,24 +23,30 @@ impl<P: CurvePointProjective> PedersenCommitment<P> {
             h: h.clone(),
         }
     }
-
-
 }
 impl<P: CurvePointProjective> Commitment for PedersenCommitment<P> {
     type Instance = P;
 
-    fn commit(&self, value: &Integer, randomness: &Integer)
-        -> Result<Self::Instance, CommitmentError> {
+    fn commit(
+        &self,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<Self::Instance, CommitmentError> {
         let v = integer_to_bigint::<P>(value);
         let r = integer_to_bigint::<P>(randomness);
-        Ok(self.g.mul(&v).add(
-            &self.h.mul(&r)))
+        Ok(self.g.mul(&v).add(&self.h.mul(&r)))
     }
 
-    fn open(&self, commitment: &Self::Instance, value: &Integer, randomness: &Integer)
-        -> Result<(), CommitmentError> {
-        let expected = self.g.mul(&integer_to_bigint::<P>(value)).add(
-            &self.h.mul(&integer_to_bigint::<P>(randomness)));
+    fn open(
+        &self,
+        commitment: &Self::Instance,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<(), CommitmentError> {
+        let expected = self
+            .g
+            .mul(&integer_to_bigint::<P>(value))
+            .add(&self.h.mul(&integer_to_bigint::<P>(randomness)));
         if expected == *commitment {
             Ok(())
         } else {
@@ -52,13 +55,13 @@ impl<P: CurvePointProjective> Commitment for PedersenCommitment<P> {
     }
 }
 
-#[cfg(all(test, feature="zexe"))]
+#[cfg(all(test, feature = "zexe"))]
 mod test {
-    use rug::Integer;
     use super::PedersenCommitment;
+    use crate::commitments::Commitment;
     use algebra::bls12_381::G1Projective;
     use rand::thread_rng;
-    use crate::commitments::Commitment;
+    use rug::Integer;
 
     #[test]
     fn test_simple_commitment() {
@@ -70,9 +73,15 @@ mod test {
         let commitment = pedersen.commit(&value, &randomness).unwrap();
         pedersen.open(&commitment, &value, &randomness).unwrap();
         let wrong_value = Integer::from(5);
-        pedersen.open(&commitment, &wrong_value, &randomness).unwrap_err();
+        pedersen
+            .open(&commitment, &wrong_value, &randomness)
+            .unwrap_err();
         let wrong_randomness = Integer::from(7);
-        pedersen.open(&commitment, &value, &wrong_randomness).unwrap_err();
-        pedersen.open(&commitment, &wrong_value, &wrong_randomness).unwrap_err();
+        pedersen
+            .open(&commitment, &value, &wrong_randomness)
+            .unwrap_err();
+        pedersen
+            .open(&commitment, &wrong_value, &wrong_randomness)
+            .unwrap_err();
     }
 }

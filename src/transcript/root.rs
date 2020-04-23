@@ -1,18 +1,19 @@
-use merlin::Transcript;
-use std::cell::RefCell;
-use rug::Integer;
 use crate::{
     channels::{
-        ChannelError,
         root::{RootProverChannel, RootVerifierChannel},
+        ChannelError,
     },
+    protocols::root::{CRSRoot, Message1, Message2, Message3, Proof},
     utils::ConvertibleUnknownOrderGroup,
-    protocols::root::{Message1, Message2, Message3, CRSRoot, Proof},
 };
+use merlin::Transcript;
+use rug::Integer;
+use std::cell::RefCell;
 
-use super::{TranscriptProtocolInteger, TranscriptProtocolChallenge, TranscriptChannelError};
+use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 pub trait TranscriptProtocolRoot<G: ConvertibleUnknownOrderGroup>:
-    TranscriptProtocolInteger<G> + TranscriptProtocolChallenge {
+    TranscriptProtocolInteger<G> + TranscriptProtocolChallenge
+{
     fn root_domain_sep(&mut self);
 }
 
@@ -22,7 +23,11 @@ impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolRoot<G> for Transcript {
     }
 }
 
-pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> {
+pub struct TranscriptVerifierChannel<
+    'a,
+    G: ConvertibleUnknownOrderGroup,
+    T: TranscriptProtocolRoot<G>,
+> {
     crs: CRSRoot<G>,
     transcript: &'a RefCell<T>,
     message1: Option<Message1<G>>,
@@ -30,8 +35,13 @@ pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, T: Tra
     message3: Option<Message3>,
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> TranscriptVerifierChannel<'a, G, T> {
-    pub fn new(crs: &CRSRoot<G>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>>
+    TranscriptVerifierChannel<'a, G, T>
+{
+    pub fn new(
+        crs: &CRSRoot<G>,
+        transcript: &'a RefCell<T>,
+    ) -> TranscriptVerifierChannel<'a, G, T> {
         TranscriptVerifierChannel {
             crs: crs.clone(),
             transcript,
@@ -54,7 +64,9 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> Transcri
     }
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootVerifierChannel<G> for TranscriptVerifierChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootVerifierChannel<G>
+    for TranscriptVerifierChannel<'a, G, T>
+{
     fn send_message1(&mut self, message: &Message1<G>) -> Result<(), ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.root_domain_sep();
@@ -84,14 +96,24 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootVeri
     }
 }
 
-pub struct TranscriptProverChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> {
+pub struct TranscriptProverChannel<
+    'a,
+    G: ConvertibleUnknownOrderGroup,
+    T: TranscriptProtocolRoot<G>,
+> {
     crs: CRSRoot<G>,
     transcript: &'a RefCell<T>,
     proof: Proof<G>,
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> TranscriptProverChannel<'a, G, T> {
-    pub fn new(crs: &CRSRoot<G>, transcript: &'a RefCell<T>, proof: &Proof<G>) -> TranscriptProverChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>>
+    TranscriptProverChannel<'a, G, T>
+{
+    pub fn new(
+        crs: &CRSRoot<G>,
+        transcript: &'a RefCell<T>,
+        proof: &Proof<G>,
+    ) -> TranscriptProverChannel<'a, G, T> {
         TranscriptProverChannel {
             crs: crs.clone(),
             transcript,
@@ -100,7 +122,9 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> Transcri
     }
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootProverChannel<G> for TranscriptProverChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolRoot<G>> RootProverChannel<G>
+    for TranscriptProverChannel<'a, G, T>
+{
     fn receive_message1(&mut self) -> Result<Message1<G>, ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.root_domain_sep();

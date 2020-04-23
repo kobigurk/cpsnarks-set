@@ -1,13 +1,16 @@
-use crate::{channels::ChannelError, commitments::CommitmentError, protocols::hash_to_prime::HashToPrimeError};
+use crate::{
+    channels::ChannelError, commitments::CommitmentError,
+    protocols::hash_to_prime::HashToPrimeError,
+};
 use r1cs_core::SynthesisError;
 use rug::Integer;
 
-pub mod root;
 pub mod coprime;
-pub mod modeq;
 pub mod hash_to_prime;
 pub mod membership;
+pub mod modeq;
 pub mod nonmembership;
+pub mod root;
 
 quick_error! {
     #[derive(Debug)]
@@ -36,7 +39,6 @@ quick_error! {
 }
 #[cfg(feature = "zexe")]
 type R1CSError = DummyBPError;
-
 
 quick_error! {
     #[derive(Debug)]

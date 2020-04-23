@@ -1,18 +1,19 @@
-use merlin::Transcript;
-use std::cell::RefCell;
-use rug::Integer;
 use crate::{
     channels::{
-        ChannelError,
         coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
+        ChannelError,
     },
+    protocols::coprime::{CRSCoprime, Message1, Message2, Message3, Proof},
     utils::ConvertibleUnknownOrderGroup,
-    protocols::coprime::{Message1, Message2, Message3, CRSCoprime, Proof},
 };
+use merlin::Transcript;
+use rug::Integer;
+use std::cell::RefCell;
 
-use super::{TranscriptProtocolInteger, TranscriptProtocolChallenge, TranscriptChannelError};
+use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 pub trait TranscriptProtocolCoprime<G: ConvertibleUnknownOrderGroup>:
-    TranscriptProtocolInteger<G> + TranscriptProtocolChallenge {
+    TranscriptProtocolInteger<G> + TranscriptProtocolChallenge
+{
     fn coprime_domain_sep(&mut self);
 }
 
@@ -22,7 +23,11 @@ impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolCoprime<G> for Transcrip
     }
 }
 
-pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> {
+pub struct TranscriptVerifierChannel<
+    'a,
+    G: ConvertibleUnknownOrderGroup,
+    T: TranscriptProtocolCoprime<G>,
+> {
     crs: CRSCoprime<G>,
     transcript: &'a RefCell<T>,
     message1: Option<Message1<G>>,
@@ -30,8 +35,13 @@ pub struct TranscriptVerifierChannel<'a, G: ConvertibleUnknownOrderGroup, T: Tra
     message3: Option<Message3>,
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> TranscriptVerifierChannel<'a, G, T> {
-    pub fn new(crs: &CRSCoprime<G>, transcript: &'a RefCell<T>) -> TranscriptVerifierChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>>
+    TranscriptVerifierChannel<'a, G, T>
+{
+    pub fn new(
+        crs: &CRSCoprime<G>,
+        transcript: &'a RefCell<T>,
+    ) -> TranscriptVerifierChannel<'a, G, T> {
         TranscriptVerifierChannel {
             crs: crs.clone(),
             transcript,
@@ -54,7 +64,9 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Trans
     }
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> CoprimeVerifierChannel<G> for TranscriptVerifierChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> CoprimeVerifierChannel<G>
+    for TranscriptVerifierChannel<'a, G, T>
+{
     fn send_message1(&mut self, message: &Message1<G>) -> Result<(), ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
@@ -88,14 +100,24 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
     }
 }
 
-pub struct TranscriptProverChannel<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> {
+pub struct TranscriptProverChannel<
+    'a,
+    G: ConvertibleUnknownOrderGroup,
+    T: TranscriptProtocolCoprime<G>,
+> {
     crs: CRSCoprime<G>,
     transcript: &'a RefCell<T>,
     proof: Proof<G>,
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> TranscriptProverChannel<'a, G, T> {
-    pub fn new(crs: &CRSCoprime<G>, transcript: &'a RefCell<T>, proof: &Proof<G>) -> TranscriptProverChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>>
+    TranscriptProverChannel<'a, G, T>
+{
+    pub fn new(
+        crs: &CRSCoprime<G>,
+        transcript: &'a RefCell<T>,
+        proof: &Proof<G>,
+    ) -> TranscriptProverChannel<'a, G, T> {
         TranscriptProverChannel {
             crs: crs.clone(),
             transcript,
@@ -104,7 +126,9 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Trans
     }
 }
 
-impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> CoprimeProverChannel<G> for TranscriptProverChannel<'a, G, T> {
+impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> CoprimeProverChannel<G>
+    for TranscriptProverChannel<'a, G, T>
+{
     fn receive_message1(&mut self) -> Result<Message1<G>, ChannelError> {
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.coprime_domain_sep();
@@ -123,7 +147,6 @@ impl<'a, G: ConvertibleUnknownOrderGroup, T: TranscriptProtocolCoprime<G>> Copri
         transcript.append_integer_point(b"alpha5", &self.proof.message2.alpha5);
         transcript.append_integer_point(b"alpha6", &self.proof.message2.alpha6);
         transcript.append_integer_point(b"alpha7", &self.proof.message2.alpha7);
-
 
         Ok(self.proof.message2.clone())
     }

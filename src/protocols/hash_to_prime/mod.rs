@@ -1,20 +1,17 @@
-use rand::{RngCore, CryptoRng};
 use crate::{
-    parameters::Parameters,
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-    protocols::{SetupError, ProofError, VerificationError},
-    commitments::{
-        Commitment,
-        pedersen::PedersenCommitment
-    },
+    commitments::{pedersen::PedersenCommitment, Commitment},
+    parameters::Parameters,
+    protocols::{ProofError, SetupError, VerificationError},
     utils::curve::CurvePointProjective,
 };
+use rand::{CryptoRng, RngCore};
 use rug::Integer;
 
 #[cfg(feature = "zexe")]
-pub mod snark_range;
-#[cfg(feature = "zexe")]
 pub mod snark_hash;
+#[cfg(feature = "zexe")]
+pub mod snark_range;
 
 #[cfg(feature = "dalek")]
 pub mod bp;
@@ -23,29 +20,32 @@ pub trait HashToPrimeProtocol<P: CurvePointProjective> {
     type Proof: Clone;
     type Parameters: Clone;
 
-    fn from_crs(
-        crs: &CRSHashToPrime<P, Self>
-    ) -> Self
-    where Self : Sized;
+    fn from_crs(crs: &CRSHashToPrime<P, Self>) -> Self
+    where
+        Self: Sized;
 
-    fn setup<R: RngCore + CryptoRng>(rng: &mut R, pedersen_commitment_parameters: &PedersenCommitment<P>, parameters: &Parameters) -> Result<Self::Parameters, SetupError>;
+    fn setup<R: RngCore + CryptoRng>(
+        rng: &mut R,
+        pedersen_commitment_parameters: &PedersenCommitment<P>,
+        parameters: &Parameters,
+    ) -> Result<Self::Parameters, SetupError>;
 
-    fn prove<R: RngCore + CryptoRng, C: HashToPrimeVerifierChannel<P, Self>> (
+    fn prove<R: RngCore + CryptoRng, C: HashToPrimeVerifierChannel<P, Self>>(
         &self,
         verifier_channel: &mut C,
         rng: &mut R,
         _: &Statement<P>,
         witness: &Witness,
     ) -> Result<(), ProofError>
-        where
-            Self: Sized;
+    where
+        Self: Sized;
     fn verify<C: HashToPrimeProverChannel<P, Self>>(
         &self,
         prover_channel: &mut C,
         statement: &Statement<P>,
     ) -> Result<(), VerificationError>
-        where
-            Self: Sized;
+    where
+        Self: Sized;
     fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>;
 }
 
@@ -84,4 +84,3 @@ quick_error! {
         }
     }
 }
-

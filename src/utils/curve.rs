@@ -1,8 +1,10 @@
+use rand::{CryptoRng, RngCore};
 use rug::Integer;
-use rand::{RngCore, CryptoRng};
 
 pub trait Field
-where Self: Clone + Sized {
+where
+    Self: Clone + Sized,
+{
     fn modulus() -> Integer;
     fn size_in_bits() -> usize;
     fn to_bits(&self) -> Vec<bool>;
@@ -16,7 +18,9 @@ where Self: Clone + Sized {
 }
 
 pub trait CurvePointProjective
-where Self: Clone + PartialEq {
+where
+    Self: Clone + PartialEq,
+{
     type ScalarField: Field;
 
     fn mul(&self, s: &Self::ScalarField) -> Self;
@@ -28,13 +32,13 @@ where Self: Clone + PartialEq {
 
 #[cfg(feature = "zexe")]
 mod zexe {
-    use algebra_core::{ProjectiveCurve, PrimeField, FpParameters, BigInteger, ToBytes};
-    use crate::utils::{bytes_to_integer, bits_big_endian_to_bytes_big_endian};
-    use super::{Field, CurvePointProjective};
+    use super::{CurvePointProjective, Field};
+    use crate::utils::{bits_big_endian_to_bytes_big_endian, bytes_to_integer};
+    use algebra_core::{BigInteger, FpParameters, PrimeField, ProjectiveCurve, ToBytes};
+    use rand::{CryptoRng, RngCore};
     use rug::Integer;
-    use rand::{RngCore, CryptoRng};
 
-    impl <F: PrimeField> Field for F {
+    impl<F: PrimeField> Field for F {
         fn modulus() -> Integer {
             let repr = F::Params::MODULUS;
             let bits = repr.to_bits();
@@ -74,7 +78,7 @@ mod zexe {
         type ScalarField = P::ScalarField;
 
         fn mul(&self, s: &Self::ScalarField) -> Self {
-        P::mul(*self, *s)
+            P::mul(*self, *s)
         }
 
         fn add(&self, other: &Self) -> Self {
@@ -97,15 +101,13 @@ mod zexe {
 
 #[cfg(feature = "dalek")]
 mod dalek {
-    use curve25519_dalek::{
-        scalar::Scalar,
-        ristretto::RistrettoPoint,
-        constants::BASEPOINT_ORDER,
+    use super::{CurvePointProjective, Field};
+    use crate::utils::{
+        bigint_to_integer, bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian,
     };
-    use crate::utils::{bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian, bigint_to_integer};
-    use super::{Field, CurvePointProjective};
+    use curve25519_dalek::{constants::BASEPOINT_ORDER, ristretto::RistrettoPoint, scalar::Scalar};
+    use rand::{CryptoRng, RngCore};
     use rug::Integer;
-    use rand::{RngCore, CryptoRng};
 
     impl Field for Scalar {
         fn modulus() -> Integer {
@@ -113,19 +115,31 @@ mod dalek {
         }
 
         fn size_in_bits() -> usize {
-            252 
+            252
         }
         fn to_bits(&self) -> Vec<bool> {
             let little_endian_bytes = self.to_bytes();
-            let big_endian_bytes = little_endian_bytes.iter().map(|x| *x).rev().collect::<Vec<_>>();
+            let big_endian_bytes = little_endian_bytes
+                .iter()
+                .map(|x| *x)
+                .rev()
+                .collect::<Vec<_>>();
             bytes_big_endian_to_bits_big_endian(&big_endian_bytes)
         }
         fn from_bits(bits: &[bool]) -> Self {
             let big_endian_bytes = bits_big_endian_to_bytes_big_endian(&bits);
-            let little_endian_bytes = big_endian_bytes.to_vec().into_iter().rev().collect::<Vec<_>>();
+            let little_endian_bytes = big_endian_bytes
+                .to_vec()
+                .into_iter()
+                .rev()
+                .collect::<Vec<_>>();
             let little_endian_bytes_length = little_endian_bytes.len();
             let little_endian_bytes_padded = if little_endian_bytes_length < 32 {
-                [little_endian_bytes, vec![0u8; 32 - little_endian_bytes_length]].concat()
+                [
+                    little_endian_bytes,
+                    vec![0u8; 32 - little_endian_bytes_length],
+                ]
+                .concat()
             } else {
                 little_endian_bytes
             };
@@ -173,7 +187,6 @@ mod dalek {
         fn rand<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
             RistrettoPoint::random(rng)
         }
-
     }
 
     #[cfg(test)]
@@ -188,5 +201,4 @@ mod dalek {
             assert_eq!(s, s2);
         }
     }
-
 }

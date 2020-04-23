@@ -1,15 +1,12 @@
 use crate::{
-    parameters::Parameters,
-    utils::{ConvertibleUnknownOrderGroup, random_symmetric_range},
-    commitments::{
-        Commitment,
-        integer::IntegerCommitment,
-    },
-    protocols::{ProofError, VerificationError},
     channels::root::{RootProverChannel, RootVerifierChannel},
+    commitments::{integer::IntegerCommitment, Commitment},
+    parameters::Parameters,
+    protocols::{ProofError, VerificationError},
+    utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
-use rug::Integer;
 use rug::rand::MutRandState;
+use rug::Integer;
 
 #[derive(Clone)]
 pub struct CRSRoot<G: ConvertibleUnknownOrderGroup> {
@@ -64,12 +61,8 @@ pub struct Protocol<G: ConvertibleUnknownOrderGroup> {
 }
 
 impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
-    pub fn from_crs(
-        crs: &CRSRoot<G>
-    ) -> Protocol<G> {
-        Protocol {
-            crs: crs.clone(),
-        }
+    pub fn from_crs(crs: &CRSRoot<G>) -> Protocol<G> {
+        Protocol { crs: crs.clone() }
     }
 
     pub fn prove<R: MutRandState, C: RootVerifierChannel<G>>(
@@ -78,11 +71,13 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         rng: &mut R,
         _: &Statement<G>,
         witness: &Witness<G>,
-    ) -> Result<(), ProofError>
-    {
-        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
-        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound()/2));
-        let c_w = G::op(&witness.w, &G::exp(&self.crs.integer_commitment_parameters.h, &r_2));
+    ) -> Result<(), ProofError> {
+        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
+        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
+        let c_w = G::op(
+            &witness.w,
+            &G::exp(&self.crs.integer_commitment_parameters.h, &r_2),
+        );
         let c_r = self.crs.integer_commitment_parameters.commit(&r_2, &r_3)?;
 
         let message1 = Message1::<G> { c_w, c_r };
@@ -99,10 +94,10 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_r_range = Integer::from(
             G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
-                2,
-                (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
-                    as u32,
-            )),
+                    2,
+                    (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
+                        as u32,
+                )),
         );
         let r_r = random_symmetric_range(rng, &r_r_range);
         let r_r_2 = random_symmetric_range(rng, &r_r_range);
@@ -111,18 +106,20 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_beta_delta_range = Integer::from(
             G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
-                2,
-                (self.crs.parameters.security_zk
-                    + self.crs.parameters.security_soundness
-                    + self.crs.parameters.hash_to_prime_bits)
-                    as u32,
-            )),
+                    2,
+                    (self.crs.parameters.security_zk
+                        + self.crs.parameters.security_soundness
+                        + self.crs.parameters.hash_to_prime_bits) as u32,
+                )),
         );
         let r_beta = random_symmetric_range(rng, &r_beta_delta_range);
         let r_delta = random_symmetric_range(rng, &r_beta_delta_range);
 
         let alpha1 = self.crs.integer_commitment_parameters.commit(&r_e, &r_r)?;
-        let alpha2 = self.crs.integer_commitment_parameters.commit(&r_r_2, &r_r_3)?;
+        let alpha2 = self
+            .crs
+            .integer_commitment_parameters
+            .commit(&r_r_2, &r_r_3)?;
         let integer_commitment_alpha3 = IntegerCommitment::<G>::new(
             &message1.c_w,
             &G::inv(&self.crs.integer_commitment_parameters.h),
@@ -140,10 +137,10 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
             alpha1,
             alpha2,
             alpha3,
-            alpha4
+            alpha4,
         };
         verifier_channel.send_message2(&message2)?;
-        
+
         let c = verifier_channel.receive_challenge()?;
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
@@ -168,19 +165,24 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         &self,
         prover_channel: &mut C,
         statement: &Statement<G>,
-    ) -> Result<(), VerificationError>
-    {
+    ) -> Result<(), VerificationError> {
         let message1 = prover_channel.receive_message1()?;
         let message2 = prover_channel.receive_message2()?;
         let c = prover_channel.generate_and_send_challenge()?;
         let message3 = prover_channel.receive_message3()?;
         let expected_alpha1 = G::op(
             &G::exp(&statement.c_e, &c),
-            &self.crs.integer_commitment_parameters.commit(&message3.s_e, &message3.s_r)?
+            &self
+                .crs
+                .integer_commitment_parameters
+                .commit(&message3.s_e, &message3.s_r)?,
         );
         let expected_alpha2 = G::op(
             &G::exp(&message1.c_r, &c),
-            &self.crs.integer_commitment_parameters.commit(&message3.s_r_2, &message3.s_r_3)?
+            &self
+                .crs
+                .integer_commitment_parameters
+                .commit(&message3.s_r_2, &message3.s_r_3)?,
         );
         let integer_commitment_alpha3 = IntegerCommitment::<G>::new(
             &message1.c_w,
@@ -203,18 +205,20 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
             2,
             (self.crs.parameters.security_zk
                 + self.crs.parameters.security_soundness
-                + self.crs.parameters.hash_to_prime_bits + 1) as u32,
+                + self.crs.parameters.hash_to_prime_bits
+                + 1) as u32,
         ));
 
         let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
-        let is_s_e_in_range = message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
+        let is_s_e_in_range =
+            message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
 
-
-        if expected_alpha1 == message2.alpha1 &&
-            expected_alpha2 == message2.alpha2 &&
-            expected_alpha3 == message2.alpha3 &&
-            expected_alpha4 == message2.alpha4 &&
-            is_s_e_in_range {
+        if expected_alpha1 == message2.alpha1
+            && expected_alpha2 == message2.alpha2
+            && expected_alpha3 == message2.alpha3
+            && expected_alpha4 == message2.alpha4
+            && is_s_e_in_range
+        {
             Ok(())
         } else {
             Err(VerificationError::VerificationFailed)
@@ -222,22 +226,25 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
     }
 }
 
-#[cfg(all(test, feature="zexe"))]
+#[cfg(all(test, feature = "zexe"))]
 mod test {
+    use super::{Protocol, Statement, Witness};
+    use crate::{
+        commitments::Commitment,
+        parameters::Parameters,
+        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
+        transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
+    };
+    use accumulator::{
+        group::{Group, Rsa2048},
+        AccumulatorWithoutHashToPrime,
+    };
+    use algebra::bls12_381::{Bls12_381, G1Projective};
+    use merlin::Transcript;
+    use rand::thread_rng;
+    use rug::rand::RandState;
     use rug::Integer;
     use std::cell::RefCell;
-    use algebra::bls12_381::{Bls12_381, G1Projective};
-    use rand::thread_rng;
-    use crate::{
-        parameters::Parameters,
-        commitments::Commitment,
-        transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-    };
-    use rug::rand::RandState;
-    use super::{Protocol, Statement, Witness};
-    use merlin::Transcript;
-    use accumulator::{AccumulatorWithoutHashToPrime, group::{Group, Rsa2048}};
 
     const LARGE_PRIMES: [u64; 4] = [
         553_525_575_239_331_913,
@@ -253,15 +260,33 @@ mod test {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_root;
+        let crs = crate::protocols::membership::Protocol::<
+            Rsa2048,
+            G1Projective,
+            HPProtocol<Bls12_381>,
+        >::setup(&params, &mut rng1, &mut rng2)
+        .unwrap()
+        .crs
+        .crs_root;
         let protocol = Protocol::<Rsa2048>::from_crs(&crs);
 
         let value = Integer::from(LARGE_PRIMES[0]);
         let randomness = Integer::from(5);
-        let commitment = protocol.crs.integer_commitment_parameters.commit(&value, &randomness).unwrap();
+        let commitment = protocol
+            .crs
+            .integer_commitment_parameters
+            .commit(&value, &randomness)
+            .unwrap();
 
-        let accum = accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
-        let accum = accum.add(&LARGE_PRIMES.iter().skip(1).map(|p| Integer::from(*p)).collect::<Vec<_>>());
+        let accum =
+            accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
+        let accum = accum.add(
+            &LARGE_PRIMES
+                .iter()
+                .skip(1)
+                .map(|p| Integer::from(*p))
+                .collect::<Vec<_>>(),
+        );
 
         let accum = accum.add_with_proof(&[value.clone()]);
         let acc = accum.0.value;
@@ -274,16 +299,23 @@ mod test {
             c_e: commitment,
             acc,
         };
-        protocol.prove(&mut verifier_channel, &mut rng1, &statement, &Witness {
-            e: value,
-            r: randomness,
-            w,
-        }).unwrap();
+        protocol
+            .prove(
+                &mut verifier_channel,
+                &mut rng1,
+                &statement,
+                &Witness {
+                    e: value,
+                    r: randomness,
+                    w,
+                },
+            )
+            .unwrap();
 
         let proof = verifier_channel.proof().unwrap();
         let verification_transcript = RefCell::new(Transcript::new(b"root"));
-        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+        let mut prover_channel =
+            TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
-
 }

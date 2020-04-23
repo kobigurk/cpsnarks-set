@@ -1,22 +1,21 @@
-use merlin::Transcript;
-use rug::Integer;
 use crate::utils::{
-    integer_to_bytes, ConvertibleUnknownOrderGroup, bigint_to_bytes,
-    curve::{CurvePointProjective},
+    bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes, ConvertibleUnknownOrderGroup,
 };
+use merlin::Transcript;
 use rug::integer::Order;
+use rug::Integer;
 
-pub mod root;
 pub mod coprime;
-pub mod modeq;
 pub mod hash_to_prime;
 pub mod membership;
+pub mod modeq;
 pub mod nonmembership;
+pub mod root;
 
-pub use root::TranscriptProtocolRoot;
-pub use modeq::TranscriptProtocolModEq;
 pub use hash_to_prime::TranscriptProtocolHashToPrime;
 pub use membership::TranscriptProtocolMembership;
+pub use modeq::TranscriptProtocolModEq;
+pub use root::TranscriptProtocolRoot;
 
 quick_error! {
     #[derive(Debug)]
@@ -25,10 +24,12 @@ quick_error! {
     }
 }
 
-
-pub trait TranscriptProtocolMembershipPrime<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective>:
-    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P> {
-
+pub trait TranscriptProtocolMembershipPrime<
+    G: ConvertibleUnknownOrderGroup,
+    P: CurvePointProjective,
+>:
+    TranscriptProtocolRoot<G> + TranscriptProtocolModEq<G, P> + TranscriptProtocolHashToPrime<P>
+{
 }
 
 pub trait TranscriptProtocolChallenge {
@@ -68,7 +69,7 @@ impl<P: CurvePointProjective> TranscriptProtocolCurve<P> for Transcript {
 
 impl TranscriptProtocolChallenge for Transcript {
     fn challenge_scalar(&mut self, label: &'static [u8], length_in_bits: u16) -> Integer {
-        let mut buf = vec![0u8; (length_in_bits/8) as usize];
+        let mut buf = vec![0u8; (length_in_bits / 8) as usize];
         self.challenge_bytes(label, &mut buf);
         Integer::from_digits(&buf[..], Order::MsfBe)
     }

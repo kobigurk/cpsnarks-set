@@ -1,25 +1,23 @@
-use bulletproofs::{
-    BulletproofGens,
-    PedersenGens,
-    r1cs::{ConstraintSystem, LinearCombination, R1CSError, R1CSProof, Prover, Verifier},
-};
-use curve25519_dalek::{
-    ristretto::RistrettoPoint,
-    scalar::Scalar,
-};
 use crate::{
-    parameters::Parameters,
-    commitments::pedersen::PedersenCommitment,
     channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-    utils::{integer_to_bigint_mod_q, log2, curve::Field},
+    commitments::pedersen::PedersenCommitment,
+    parameters::Parameters,
     protocols::{
-        hash_to_prime::{HashToPrimeProtocol, CRSHashToPrime, Statement, Witness, HashToPrimeError},
-        SetupError, ProofError, VerificationError,
-    }
+        hash_to_prime::{
+            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
+        },
+        ProofError, SetupError, VerificationError,
+    },
+    utils::{curve::Field, integer_to_bigint_mod_q, log2},
 };
+use bulletproofs::{
+    r1cs::{ConstraintSystem, LinearCombination, Prover, R1CSError, R1CSProof, Verifier},
+    BulletproofGens, PedersenGens,
+};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use merlin::Transcript;
 use rand::Rng;
 use rug::Integer;
-use merlin::Transcript;
 use std::cell::RefCell;
 
 pub fn range_proof<CS: ConstraintSystem>(
@@ -82,15 +80,17 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
     type Proof = R1CSProof;
     type Parameters = BPParameters;
 
-    fn from_crs(
-        crs: &CRSHashToPrime<RistrettoPoint, Self>
-    ) -> Protocol {
+    fn from_crs(crs: &CRSHashToPrime<RistrettoPoint, Self>) -> Protocol {
         Protocol {
             crs: (*crs).clone(),
         }
     }
 
-    fn setup<R: Rng>(_: &mut R, _: &PedersenCommitment<RistrettoPoint>, parameters: &Parameters) -> Result<Self::Parameters, SetupError> {
+    fn setup<R: Rng>(
+        _: &mut R,
+        _: &PedersenCommitment<RistrettoPoint>,
+        parameters: &Parameters,
+    ) -> Result<Self::Parameters, SetupError> {
         let rounded_hash_to_prime_bits = 1 << log2(parameters.hash_to_prime_bits as usize);
         Ok(BPParameters {
             bulletproof_gens: BulletproofGens::new(rounded_hash_to_prime_bits, 1),
@@ -104,8 +104,7 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         _: &mut R,
         _: &Statement<RistrettoPoint>,
         witness: &Witness,
-    ) -> Result<(), ProofError>
-    {
+    ) -> Result<(), ProofError> {
         let pedersen_gens = PedersenGens {
             B: self.crs.pedersen_commitment_parameters.g,
             B_blinding: self.crs.pedersen_commitment_parameters.h,
@@ -114,19 +113,32 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         let (proof, _) = {
             let default_transcript = RefCell::new(Transcript::new(b"bp_range_proof"));
             let prover_transcript = if self.crs.hash_to_prime_parameters.transcript.is_some() {
-                    self.crs.hash_to_prime_parameters.transcript.as_ref().unwrap()
-                } else { 
-                    &default_transcript
-                };
+                self.crs
+                    .hash_to_prime_parameters
+                    .transcript
+                    .as_ref()
+                    .unwrap()
+            } else {
+                &default_transcript
+            };
 
-            let mut prover_transcript = prover_transcript.try_borrow_mut().map_err(|_| ProofError::CouldNotCreateProof)?;
+            let mut prover_transcript = prover_transcript
+                .try_borrow_mut()
+                .map_err(|_| ProofError::CouldNotCreateProof)?;
 
             let mut prover = Prover::new(&pedersen_gens, &mut *prover_transcript);
 
             let value = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.e)?;
             let randomness = integer_to_bigint_mod_q::<RistrettoPoint>(&witness.r_q)?;
             let (com, var) = prover.commit(value, randomness);
-            if range_proof(&mut prover, var.into(), Some(value), self.crs.parameters.hash_to_prime_bits as usize).is_err() {
+            if range_proof(
+                &mut prover,
+                var.into(),
+                Some(value),
+                self.crs.parameters.hash_to_prime_bits as usize,
+            )
+            .is_err()
+            {
                 return Err(ProofError::CouldNotCreateProof);
             }
 
@@ -140,12 +152,11 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
         Ok(())
     }
 
-    fn verify<C: HashToPrimeProverChannel<RistrettoPoint, Self>> (
+    fn verify<C: HashToPrimeProverChannel<RistrettoPoint, Self>>(
         &self,
         prover_channel: &mut C,
         statement: &Statement<RistrettoPoint>,
-    ) -> Result<(), VerificationError>
-    {
+    ) -> Result<(), VerificationError> {
         let pedersen_gens = PedersenGens {
             B: self.crs.pedersen_commitment_parameters.g,
             B_blinding: self.crs.pedersen_commitment_parameters.h,
@@ -153,51 +164,62 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
 
         let default_transcript = RefCell::new(Transcript::new(b"bp_range_proof"));
         let verifier_transcript = if self.crs.hash_to_prime_parameters.transcript.is_some() {
-                self.crs.hash_to_prime_parameters.transcript.as_ref().unwrap()
-            } else { 
-                &default_transcript
-            };
+            self.crs
+                .hash_to_prime_parameters
+                .transcript
+                .as_ref()
+                .unwrap()
+        } else {
+            &default_transcript
+        };
 
-        let mut verifier_transcript = verifier_transcript.try_borrow_mut().map_err(|_| VerificationError::VerificationFailed)?;
+        let mut verifier_transcript = verifier_transcript
+            .try_borrow_mut()
+            .map_err(|_| VerificationError::VerificationFailed)?;
         let mut verifier = Verifier::new(&mut *verifier_transcript);
 
         let var = verifier.commit(statement.c_e_q.compress());
 
-        if range_proof(&mut verifier, var.into(), None, self.crs.parameters.hash_to_prime_bits as usize).is_err() {
+        if range_proof(
+            &mut verifier,
+            var.into(),
+            None,
+            self.crs.parameters.hash_to_prime_bits as usize,
+        )
+        .is_err()
+        {
             return Err(VerificationError::VerificationFailed);
         }
 
         let proof = prover_channel.receive_proof()?;
-        Ok(verifier.verify(&proof, &pedersen_gens, &self.crs.hash_to_prime_parameters.bulletproof_gens)?)
+        Ok(verifier.verify(
+            &proof,
+            &pedersen_gens,
+            &self.crs.hash_to_prime_parameters.bulletproof_gens,
+        )?)
     }
 
-    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError>  {
+    fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError> {
         Ok((e.clone(), 0))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::{Protocol, Statement, Witness};
+    use crate::{
+        commitments::Commitment,
+        parameters::Parameters,
+        protocols::hash_to_prime::{bp::Protocol as HPProtocol, HashToPrimeProtocol},
+        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+    };
+    use accumulator::group::Rsa2048;
+    use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+    use merlin::Transcript;
+    use rand::thread_rng;
+    use rug::rand::RandState;
     use rug::Integer;
     use std::cell::RefCell;
-    use rand::thread_rng;
-    use crate::{
-        parameters::Parameters,
-        commitments::Commitment,
-        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
-        protocols::hash_to_prime::{
-            HashToPrimeProtocol,
-            bp::Protocol as HPProtocol,
-        },
-    };
-    use rug::rand::RandState;
-    use accumulator::group::Rsa2048;
-    use super::{Protocol, Statement, Witness};
-    use curve25519_dalek::{
-        scalar::Scalar,
-        ristretto::RistrettoPoint,
-    };
-    use merlin::Transcript;
 
     #[test]
     fn test_proof() {
@@ -206,32 +228,46 @@ mod tests {
         rng1.seed(&Integer::from(13));
         let mut rng2 = thread_rng();
 
-        let crs = crate::protocols::membership::Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::setup(&params, &mut rng1, &mut rng2).unwrap().crs.crs_hash_to_prime;
+        let crs =
+            crate::protocols::membership::Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::setup(
+                &params, &mut rng1, &mut rng2,
+            )
+            .unwrap()
+            .crs
+            .crs_hash_to_prime;
         let protocol = Protocol::from_crs(&crs);
 
         let value = Integer::from(Integer::u_pow_u(
-                2,
-                (crs.parameters.hash_to_prime_bits)
-                    as u32,
-            )) - &Integer::from(129);
+            2,
+            (crs.parameters.hash_to_prime_bits) as u32,
+        )) - &Integer::from(129);
         let randomness = Integer::from(9);
-        let commitment = protocol.crs.pedersen_commitment_parameters.commit(&value, &randomness).unwrap();
+        let commitment = protocol
+            .crs
+            .pedersen_commitment_parameters
+            .commit(&value, &randomness)
+            .unwrap();
 
         let proof_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
-        let statement = Statement {
-            c_e_q: commitment,
-        };
+        let statement = Statement { c_e_q: commitment };
         let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
-        protocol.prove(&mut verifier_channel, &mut rng2, &statement, &Witness {
-            e: value,
-            r_q: randomness,
-        }).unwrap();
+        protocol
+            .prove(
+                &mut verifier_channel,
+                &mut rng2,
+                &statement,
+                &Witness {
+                    e: value,
+                    r_q: randomness,
+                },
+            )
+            .unwrap();
 
         let proof = verifier_channel.proof().unwrap();
 
         let verification_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
-        let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+        let mut prover_channel =
+            TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
         protocol.verify(&mut prover_channel, &statement).unwrap();
     }
 }
-

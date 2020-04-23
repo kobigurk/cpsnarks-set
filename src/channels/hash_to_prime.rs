@@ -1,6 +1,5 @@
 use crate::{
-    channels::ChannelError,
-    protocols::hash_to_prime::HashToPrimeProtocol,
+    channels::ChannelError, protocols::hash_to_prime::HashToPrimeProtocol,
     utils::curve::CurvePointProjective,
 };
 pub trait HashToPrimeVerifierChannel<P: CurvePointProjective, HP: HashToPrimeProtocol<P>> {

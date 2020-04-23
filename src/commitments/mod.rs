@@ -17,6 +17,15 @@ quick_error! {
 pub trait Commitment {
     type Instance;
 
-    fn commit(&self, value: &Integer, randomness: &Integer) -> Result<Self::Instance, CommitmentError>;
-    fn open(&self, commitment: &Self::Instance, value: &Integer, randomness: &Integer) -> Result<(), CommitmentError>;
+    fn commit(
+        &self,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<Self::Instance, CommitmentError>;
+    fn open(
+        &self,
+        commitment: &Self::Instance,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<(), CommitmentError>;
 }

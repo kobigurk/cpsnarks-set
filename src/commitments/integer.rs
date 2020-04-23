@@ -1,9 +1,9 @@
-use rug::Integer;
-use rug::rand::MutRandState;
 use crate::{
-    commitments::{CommitmentError, Commitment},
+    commitments::{Commitment, CommitmentError},
     utils::ConvertibleUnknownOrderGroup,
 };
+use rug::rand::MutRandState;
+use rug::Integer;
 
 #[derive(Clone)]
 pub struct IntegerCommitment<G: ConvertibleUnknownOrderGroup> {
@@ -16,10 +16,7 @@ impl<G: ConvertibleUnknownOrderGroup> IntegerCommitment<G> {
         let upper_bound = G::order_upper_bound();
         let g = G::unknown_order_elem();
         let h = G::exp(&g, &upper_bound.random_below(rng));
-        IntegerCommitment {
-            g,
-            h,
-        }
+        IntegerCommitment { g, h }
     }
 
     pub fn new(g: &G::Elem, h: &G::Elem) -> IntegerCommitment<G> {
@@ -33,11 +30,20 @@ impl<G: ConvertibleUnknownOrderGroup> IntegerCommitment<G> {
 impl<G: ConvertibleUnknownOrderGroup> Commitment for IntegerCommitment<G> {
     type Instance = G::Elem;
 
-    fn commit(&self, value: &Integer, randomness: &Integer) -> Result<Self::Instance, CommitmentError> {
+    fn commit(
+        &self,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<Self::Instance, CommitmentError> {
         Ok(G::op(&G::exp(&self.g, value), &G::exp(&self.h, randomness)))
     }
 
-    fn open(&self, commitment: &Self::Instance, value: &Integer, randomness: &Integer) -> Result<(), CommitmentError> {
+    fn open(
+        &self,
+        commitment: &Self::Instance,
+        value: &Integer,
+        randomness: &Integer,
+    ) -> Result<(), CommitmentError> {
         let expected = G::op(&G::exp(&self.g, value), &G::exp(&self.h, randomness));
         if expected == *commitment {
             Ok(())
@@ -49,11 +55,11 @@ impl<G: ConvertibleUnknownOrderGroup> Commitment for IntegerCommitment<G> {
 
 #[cfg(test)]
 mod test {
-    use rug::Integer;
-    use rug::rand::RandState;
     use super::IntegerCommitment;
     use crate::commitments::Commitment;
     use accumulator::group::Rsa2048;
+    use rug::rand::RandState;
+    use rug::Integer;
 
     #[test]
     fn test_simple_commitment() {
@@ -66,9 +72,15 @@ mod test {
         let commitment = integer.commit(&value, &randomness).unwrap();
         integer.open(&commitment, &value, &randomness).unwrap();
         let wrong_value = Integer::from(5);
-        integer.open(&commitment, &wrong_value, &randomness).unwrap_err();
+        integer
+            .open(&commitment, &wrong_value, &randomness)
+            .unwrap_err();
         let wrong_randomness = Integer::from(7);
-        integer.open(&commitment, &value, &wrong_randomness).unwrap_err();
-        integer.open(&commitment, &wrong_value, &wrong_randomness).unwrap_err();
+        integer
+            .open(&commitment, &value, &wrong_randomness)
+            .unwrap_err();
+        integer
+            .open(&commitment, &wrong_value, &wrong_randomness)
+            .unwrap_err();
     }
 }

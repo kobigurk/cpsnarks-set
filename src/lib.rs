@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate quick_error;
 
-pub mod utils;
 pub mod channels;
-pub mod transcript;
+pub mod commitments;
 pub mod parameters;
 pub mod protocols;
-pub mod commitments;
+pub mod transcript;
+pub mod utils;

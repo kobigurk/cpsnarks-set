@@ -1,12 +1,9 @@
-use rug::Integer;
 use super::ChannelError;
 use crate::{
-    utils::{
-        ConvertibleUnknownOrderGroup,
-        curve::{CurvePointProjective},
-    },
-    protocols::modeq::{Message1, Message2}
+    protocols::modeq::{Message1, Message2},
+    utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };
+use rug::Integer;
 
 pub trait ModEqVerifierChannel<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
     fn send_message1(&mut self, message: &Message1<G, P>) -> Result<(), ChannelError>;

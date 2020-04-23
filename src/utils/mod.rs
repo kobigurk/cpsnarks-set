@@ -1,21 +1,20 @@
-use rug::Integer;
-use rug::rand::MutRandState;
-use rug::integer::Order;
 use accumulator::group::{ElemToBytes, UnknownOrderGroup};
+use rug::integer::Order;
+use rug::rand::MutRandState;
+use rug::Integer;
 
 pub mod curve;
 use curve::{CurvePointProjective, Field};
 
-pub trait ConvertibleUnknownOrderGroup : UnknownOrderGroup + ElemToBytes {}
+pub trait ConvertibleUnknownOrderGroup: UnknownOrderGroup + ElemToBytes {}
 impl<T: UnknownOrderGroup + ElemToBytes> ConvertibleUnknownOrderGroup for T {}
 
-
 pub fn random_between<R: MutRandState>(rng: &mut R, min: &Integer, max: &Integer) -> Integer {
-    min + Integer::from(max-min).random_below(rng)
+    min + Integer::from(max - min).random_below(rng)
 }
 
 pub fn random_symmetric_range<R: MutRandState>(rng: &mut R, max: &Integer) -> Integer {
-    Integer::from(-max) + Integer::from(2*max).random_below(rng)
+    Integer::from(-max) + Integer::from(2 * max).random_below(rng)
 }
 
 pub fn bytes_big_endian_to_bits_big_endian(bytes: &[u8]) -> Vec<bool> {
@@ -30,14 +29,13 @@ pub fn bytes_big_endian_to_bits_big_endian(bytes: &[u8]) -> Vec<bool> {
     bits
 }
 
-
 pub fn bits_big_endian_to_bytes_big_endian(bits: &[bool]) -> Vec<u8> {
-    let byte_length = (bits.len() + 7)/8;
+    let byte_length = (bits.len() + 7) / 8;
     let mut bytes = vec![];
     for b in 0..byte_length {
         let mut byte = 0 as u8;
         for i in 0..8 {
-            byte |= (bits[8*b + i] as u8)<<(7-i);
+            byte |= (bits[8 * b + i] as u8) << (7 - i);
         }
         bytes.push(byte);
     }
@@ -51,8 +49,7 @@ pub fn integer_to_bytes(num: &Integer) -> Vec<u8> {
     bytes
 }
 
-pub fn integer_to_bigint<P: CurvePointProjective>(num: &Integer)
-                         -> P::ScalarField {
+pub fn integer_to_bigint<P: CurvePointProjective>(num: &Integer) -> P::ScalarField {
     let bytes = integer_to_bytes(num);
     let bits = bytes_big_endian_to_bits_big_endian(&bytes);
     P::ScalarField::from_bits(&bits)
@@ -63,8 +60,9 @@ pub fn integer_mod_q<P: CurvePointProjective>(num: &Integer) -> Result<Integer, 
     num.clone().pow_mod(&Integer::from(1), &q)
 }
 
-pub fn integer_to_bigint_mod_q<P: CurvePointProjective>(num: &Integer)
-                                             -> Result<P::ScalarField, Integer> {
+pub fn integer_to_bigint_mod_q<P: CurvePointProjective>(
+    num: &Integer,
+) -> Result<P::ScalarField, Integer> {
     let bytes = integer_to_bytes(&integer_mod_q::<P>(num)?);
     let bits = bytes_big_endian_to_bits_big_endian(&bytes);
     Ok(P::ScalarField::from_bits(&bits))
@@ -76,14 +74,13 @@ pub fn bigint_to_bytes<P: CurvePointProjective>(num: &P::ScalarField) -> Vec<u8>
     bytes
 }
 
-pub fn bytes_to_integer(bytes: &[u8]) ->  Integer {
+pub fn bytes_to_integer(bytes: &[u8]) -> Integer {
     let mut big = Integer::from(0);
     big.assign_digits(bytes, Order::MsfBe);
     big
 }
 
-pub fn bigint_to_integer<P: CurvePointProjective>(num: &P::ScalarField)
-                                             ->  Integer {
+pub fn bigint_to_integer<P: CurvePointProjective>(num: &P::ScalarField) -> Integer {
     let bytes = bigint_to_bytes::<P>(num);
     let mut big = Integer::from(0);
     big.assign_digits(&bytes, Order::MsfBe);
@@ -99,11 +96,11 @@ pub fn log2(x: usize) -> u32 {
     core::mem::size_of::<usize>() as u32 * 8 - n
 }
 
-#[cfg(all(test, feature="zexe"))]
+#[cfg(all(test, feature = "zexe"))]
 mod test {
-    use crate::utils::{integer_to_bigint, bigint_to_integer};
-    use rug::Integer;
+    use crate::utils::{bigint_to_integer, integer_to_bigint};
     use algebra::bls12_381::G1Projective;
+    use rug::Integer;
 
     #[test]
     fn test_back_and_forth() {
@@ -112,5 +109,4 @@ mod test {
         let int2 = bigint_to_integer::<G1Projective>(&big);
         assert_eq!(int, int2);
     }
-
 }

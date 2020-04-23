@@ -1,9 +1,9 @@
-use rug::Integer;
 use super::ChannelError;
 use crate::{
-    utils::ConvertibleUnknownOrderGroup,
     protocols::root::{Message1, Message2, Message3},
+    utils::ConvertibleUnknownOrderGroup,
 };
+use rug::Integer;
 
 pub trait RootVerifierChannel<G: ConvertibleUnknownOrderGroup> {
     fn send_message1(&mut self, message: &Message1<G>) -> Result<(), ChannelError>;
