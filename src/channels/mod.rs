@@ -1,5 +1,3 @@
-pub mod nonmembership;
-
 use std::cell::{BorrowError, BorrowMutError};
 
 quick_error! {

@@ -12,8 +12,6 @@ use merlin::Transcript;
 use rug::integer::Order;
 use rug::Integer;
 
-pub mod nonmembership;
-
 quick_error! {
     #[derive(Debug)]
     pub enum TranscriptChannelError {

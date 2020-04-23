@@ -1,5 +1,4 @@
 use crate::{
-    channels::nonmembership::*,
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{
@@ -23,9 +22,13 @@ use crate::{
     utils::ConvertibleUnknownOrderGroup,
     utils::{curve::CurvePointProjective, random_between},
 };
+use channel::{NonMembershipProverChannel, NonMembershipVerifierChannel};
 use rand::{CryptoRng, RngCore};
 use rug::rand::MutRandState;
 use rug::Integer;
+
+pub mod channel;
+pub mod transcript;
 
 pub struct CRS<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimeProtocol<P>>
 {
@@ -249,11 +252,11 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_hash::{
-            HashToPrimeHashParameters, Protocol as HPHashProtocol,
-        },
         protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-        transcript::nonmembership::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            hash_to_prime::snark_hash::{HashToPrimeHashParameters, Protocol as HPHashProtocol},
+            nonmembership::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::group::{ClassGroup, Rsa2048};
     use accumulator::{group::Group, AccumulatorWithoutHashToPrime};
