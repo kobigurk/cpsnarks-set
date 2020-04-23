@@ -89,8 +89,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_a = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
         let r_a_prime = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
         let rho_b_cap = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
-        let rho_b_cap_prime =
-            random_symmetric_range(rng, &(G::order_upper_bound() / 2));
+        let rho_b_cap_prime = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
         let c_a = G::op(
             &witness.d,
             &G::exp(&self.crs.integer_commitment_parameters.h, &r_a),
@@ -124,27 +123,24 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_b = random_symmetric_range(rng, &r_b_e_range);
         let r_e = random_symmetric_range(rng, &r_b_e_range);
 
-        let r_r_range = 
-            G::order_upper_bound() / 2
-                * Integer::from(Integer::u_pow_u(
-                    2,
-                    (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
-                        as u32,
-                ));
+        let r_r_range = G::order_upper_bound() / 2
+            * Integer::from(Integer::u_pow_u(
+                2,
+                (self.crs.parameters.security_zk + self.crs.parameters.security_soundness) as u32,
+            ));
         let r_rho_b_cap = random_symmetric_range(rng, &r_r_range);
         let r_r = random_symmetric_range(rng, &r_r_range);
         let r_r_a = random_symmetric_range(rng, &r_r_range);
         let r_r_a_prime = random_symmetric_range(rng, &r_r_range);
         let r_rho_b_cap_prime = random_symmetric_range(rng, &r_r_range);
 
-        let r_beta_delta_range = 
-            G::order_upper_bound() / 2
-                * Integer::from(Integer::u_pow_u(
-                    2,
-                    (self.crs.parameters.security_zk
-                        + self.crs.parameters.security_soundness
-                        + self.crs.parameters.hash_to_prime_bits) as u32,
-                ));
+        let r_beta_delta_range = G::order_upper_bound() / 2
+            * Integer::from(Integer::u_pow_u(
+                2,
+                (self.crs.parameters.security_zk
+                    + self.crs.parameters.security_soundness
+                    + self.crs.parameters.hash_to_prime_bits) as u32,
+            ));
         let r_beta = random_symmetric_range(rng, &r_beta_delta_range);
         let r_delta = random_symmetric_range(rng, &r_beta_delta_range);
 
@@ -190,8 +186,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let s_r_a_prime = r_r_a_prime - c.clone() * r_a_prime.clone();
         let s_rho_b_cap_prime = r_rho_b_cap_prime - c.clone() * rho_b_cap_prime.clone();
         let s_beta = r_beta + c.clone() * (witness.e.clone() * r_a + rho_b_cap);
-        let s_delta =
-            r_delta + c * (witness.e.clone() * r_a_prime + rho_b_cap_prime);
+        let s_delta = r_delta + c * (witness.e.clone() * r_a_prime + rho_b_cap_prime);
         let message3 = Message3 {
             s_b,
             s_e,

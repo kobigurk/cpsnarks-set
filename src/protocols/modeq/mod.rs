@@ -75,13 +75,11 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
                 + self.crs.parameters.hash_to_prime_bits) as u32,
         ));
         let r_e = random_symmetric_range(rng1, &r_e_range);
-        let r_r_range: Integer = 
-            G::order_upper_bound() / 2
-                * Integer::from(Integer::u_pow_u(
-                    2,
-                    (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
-                        as u32,
-                ));
+        let r_r_range: Integer = G::order_upper_bound() / 2
+            * Integer::from(Integer::u_pow_u(
+                2,
+                (self.crs.parameters.security_zk + self.crs.parameters.security_soundness) as u32,
+            ));
         let r_r = random_symmetric_range(rng1, &r_r_range);
         assert!(self.crs.parameters.field_size_bits as usize >= P::ScalarField::size_in_bits());
         let r_r_q_field = P::ScalarField::rand(rng2);
