@@ -252,9 +252,11 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
         protocols::{
-            hash_to_prime::snark_hash::{HashToPrimeHashParameters, Protocol as HPHashProtocol},
+            hash_to_prime::{
+                snark_hash::{HashToPrimeHashParameters, Protocol as HPHashProtocol},
+                snark_range::Protocol as HPProtocol,
+            },
             nonmembership::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
         },
     };
@@ -518,8 +520,10 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::bp::Protocol as HPProtocol,
-        transcript::nonmembership::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            hash_to_prime::bp::Protocol as HPProtocol,
+            nonmembership::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::group::Rsa2048;
     use accumulator::{group::Group, AccumulatorWithoutHashToPrime};
