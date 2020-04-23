@@ -429,7 +429,7 @@ mod test {
             HPHashProtocol<Bls12_381, TestHashToPrimeParameters>,
         >::from_crs(&crs);
 
-        let value = Integer::from(24928329);
+        let value = Integer::from(24_928_329);
         let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
         let randomness = Integer::from(5);
         let commitment = protocol

@@ -347,11 +347,7 @@ mod test {
         let c = HashToPrimeHashCircuit::<Bls12_381, TestParameters> {
             security_level: crs.parameters.security_level,
             required_bit_size: crs.parameters.hash_to_prime_bits,
-            value: Some(
-                integer_to_bigint_mod_q::<G1Projective>(&value)
-                    .unwrap()
-                    .into(),
-            ),
+            value: Some(integer_to_bigint_mod_q::<G1Projective>(&value).unwrap()),
             index: Some(index),
             parameters_type: std::marker::PhantomData,
         };

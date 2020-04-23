@@ -311,7 +311,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -389,7 +389,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             ClassGroup::op(&ClassGroup::exp(&d, &value), &ClassGroup::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -447,7 +447,7 @@ mod test {
             HPHashProtocol<Bls12_381, TestHashToPrimeParameters>,
         >::from_crs(&crs);
 
-        let value = Integer::from(24928329);
+        let value = Integer::from(24_928_329);
         let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
         let randomness = Integer::from(5);
         let commitment = protocol
@@ -472,7 +472,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &hashed_value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.crs_coprime.integer_commitment_parameters.g
@@ -574,7 +574,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.crs_modeq.integer_commitment_parameters.g

@@ -351,7 +351,7 @@ mod test {
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
-        let b = non_mem_proof.b.clone();
+        let b = non_mem_proof.b;
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
             protocol.crs.integer_commitment_parameters.g

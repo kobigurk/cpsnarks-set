@@ -103,7 +103,7 @@ mod test {
 
     #[test]
     fn test_back_and_forth() {
-        let int = Integer::from(2493823);
+        let int = Integer::from(2_493_823);
         let big = integer_to_bigint::<G1Projective>(&int);
         let int2 = bigint_to_integer::<G1Projective>(&big);
         assert_eq!(int, int2);

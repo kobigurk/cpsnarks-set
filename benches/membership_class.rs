@@ -73,7 +73,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let proof_transcript = RefCell::new(Transcript::new(b"membership"));
     let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
     let statement = Statement {
-        c_e_q: commitment.clone(),
+        c_e_q: commitment,
         c_p: acc.clone(),
     };
     protocol
@@ -99,7 +99,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let proof_transcript = RefCell::new(Transcript::new(b"membership"));
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
             let statement = Statement {
-                c_e_q: commitment.clone(),
+                c_e_q: commitment,
                 c_p: acc.clone(),
             };
             protocol
