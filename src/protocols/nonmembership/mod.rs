@@ -561,20 +561,23 @@ mod test {
 
         let accum =
             accumulator::Accumulator::<Rsa2048, Integer, AccumulatorWithoutHashToPrime>::empty();
-        let accum = accum.add(
-            &LARGE_PRIMES
-                .iter()
-                .skip(1)
-                .map(|p| Integer::from(*p))
-                .collect::<Vec<_>>(),
-        );
+        let acc_set = LARGE_PRIMES
+            .iter()
+            .skip(1)
+            .map(|p| Integer::from(*p))
+            .collect::<Vec<_>>();
+        let accum = accum.add(&acc_set);
+
+        let non_mem_proof = accum
+            .prove_nonmembership(&acc_set, &[value.clone()])
+            .unwrap();
 
         let acc = accum.value;
         let d = non_mem_proof.d.clone();
         let b = non_mem_proof.b.clone();
         assert_eq!(
             Rsa2048::op(&Rsa2048::exp(&d, &value), &Rsa2048::exp(&acc, &b)),
-            protocol.crs.integer_commitment_parameters.g
+            protocol.crs.crs_modeq.integer_commitment_parameters.g
         );
 
         let proof_transcript = RefCell::new(Transcript::new(b"nonmembership"));
