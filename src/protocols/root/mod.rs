@@ -72,8 +72,8 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         _: &Statement<G>,
         witness: &Witness<G>,
     ) -> Result<(), ProofError> {
-        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
-        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
+        let r_2 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / Integer::from(2)));
+        let r_3 = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / Integer::from(2)));
         let c_w = G::op(
             &witness.w,
             &G::exp(&self.crs.integer_commitment_parameters.h, &r_2),
@@ -147,7 +147,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let s_r_2 = r_r_2 - c.clone() * r_2.clone();
         let s_r_3 = r_r_3 - c.clone() * r_3.clone();
         let s_beta = r_beta - c.clone() * witness.e.clone() * r_2.clone();
-        let s_delta = r_delta - c.clone() * witness.e.clone() * r_3.clone();
+        let s_delta = r_delta - c * witness.e.clone() * r_3;
         let message3 = Message3 {
             s_e,
             s_r,
