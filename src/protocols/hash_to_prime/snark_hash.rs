@@ -238,7 +238,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         let bits_to_skip = bigint_bits as usize - P::MESSAGE_SIZE as usize;
         let value_raw_bits = value.into_repr().to_bits();
         for b in &value_raw_bits[..bits_to_skip] {
-            if *b != false {
+            if *b {
                 return Err(HashToPrimeError::ValueTooBig);
             }
         }

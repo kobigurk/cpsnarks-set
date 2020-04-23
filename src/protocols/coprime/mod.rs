@@ -86,11 +86,11 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         statement: &Statement<G>,
         witness: &Witness<G>,
     ) -> Result<(), ProofError> {
-        let r_a = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
-        let r_a_prime = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
-        let rho_b_cap = random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
+        let r_a = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
+        let r_a_prime = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
+        let rho_b_cap = random_symmetric_range(rng, &(G::order_upper_bound() / 2));
         let rho_b_cap_prime =
-            random_symmetric_range(rng, &Integer::from(G::order_upper_bound() / 2));
+            random_symmetric_range(rng, &(G::order_upper_bound() / 2));
         let c_a = G::op(
             &witness.d,
             &G::exp(&self.crs.integer_commitment_parameters.h, &r_a),
@@ -124,29 +124,27 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         let r_b = random_symmetric_range(rng, &r_b_e_range);
         let r_e = random_symmetric_range(rng, &r_b_e_range);
 
-        let r_r_range = Integer::from(
+        let r_r_range = 
             G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                     2,
                     (self.crs.parameters.security_zk + self.crs.parameters.security_soundness)
                         as u32,
-                )),
-        );
+                ));
         let r_rho_b_cap = random_symmetric_range(rng, &r_r_range);
         let r_r = random_symmetric_range(rng, &r_r_range);
         let r_r_a = random_symmetric_range(rng, &r_r_range);
         let r_r_a_prime = random_symmetric_range(rng, &r_r_range);
         let r_rho_b_cap_prime = random_symmetric_range(rng, &r_r_range);
 
-        let r_beta_delta_range = Integer::from(
+        let r_beta_delta_range = 
             G::order_upper_bound() / 2
                 * Integer::from(Integer::u_pow_u(
                     2,
                     (self.crs.parameters.security_zk
                         + self.crs.parameters.security_soundness
                         + self.crs.parameters.hash_to_prime_bits) as u32,
-                )),
-        );
+                ));
         let r_beta = random_symmetric_range(rng, &r_beta_delta_range);
         let r_delta = random_symmetric_range(rng, &r_beta_delta_range);
 
@@ -184,16 +182,16 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
         verifier_channel.send_message2(&message2)?;
 
         let c = verifier_channel.receive_challenge()?;
-        let s_b = r_b.clone() - c.clone() * witness.b.clone();
+        let s_b = r_b - c.clone() * witness.b.clone();
         let s_e = r_e - c.clone() * witness.e.clone();
         let s_rho_b_cap = r_rho_b_cap - c.clone() * rho_b_cap.clone();
         let s_r = r_r - c.clone() * witness.r.clone();
-        let s_r_a = r_r_a.clone() - c.clone() * r_a.clone();
+        let s_r_a = r_r_a - c.clone() * r_a.clone();
         let s_r_a_prime = r_r_a_prime - c.clone() * r_a_prime.clone();
         let s_rho_b_cap_prime = r_rho_b_cap_prime - c.clone() * rho_b_cap_prime.clone();
-        let s_beta = r_beta + c.clone() * (witness.e.clone() * r_a.clone() + rho_b_cap.clone());
+        let s_beta = r_beta + c.clone() * (witness.e.clone() * r_a + rho_b_cap);
         let s_delta =
-            r_delta + c.clone() * (witness.e.clone() * r_a_prime.clone() + rho_b_cap_prime.clone());
+            r_delta + c * (witness.e.clone() * r_a_prime + rho_b_cap_prime);
         let message3 = Message3 {
             s_b,
             s_e,
@@ -272,7 +270,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
                 + 1) as u32,
         ));
 
-        let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
+        let s_e_expected_left: Integer = -s_e_expected_right.clone();
         let is_s_e_in_range =
             message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
 

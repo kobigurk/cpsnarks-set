@@ -70,8 +70,7 @@ pub fn integer_to_bigint_mod_q<P: CurvePointProjective>(
 
 pub fn bigint_to_bytes<P: CurvePointProjective>(num: &P::ScalarField) -> Vec<u8> {
     let bits = num.to_bits();
-    let bytes = bits_big_endian_to_bytes_big_endian(&bits);
-    bytes
+    bits_big_endian_to_bytes_big_endian(&bits)
 }
 
 pub fn bytes_to_integer(bytes: &[u8]) -> Integer {

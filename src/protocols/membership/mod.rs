@@ -111,12 +111,12 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
                 },
                 crs_root: CRSRoot::<G> {
                     parameters: parameters.clone(),
-                    integer_commitment_parameters: integer_commitment_parameters.clone(),
+                    integer_commitment_parameters,
                 },
                 crs_hash_to_prime: CRSHashToPrime::<P, HP> {
                     parameters: parameters.clone(),
-                    pedersen_commitment_parameters: pedersen_commitment_parameters.clone(),
-                    hash_to_prime_parameters: hash_to_prime_parameters.clone(),
+                    pedersen_commitment_parameters,
+                    hash_to_prime_parameters,
                 },
             },
         })
@@ -165,12 +165,12 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
             rng1,
             rng2,
             &ModEqStatement {
-                c_e: c_e.clone(),
+                c_e,
                 c_e_q: statement.c_e_q.clone(),
             },
             &ModEqWitness {
-                e: hashed_e.clone(),
-                r: r.clone(),
+                e: hashed_e,
+                r,
                 r_q: witness.r_q.clone(),
             },
         )?;
@@ -213,7 +213,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective, HP: HashToPrimePr
         modeq.verify(
             prover_channel,
             &ModEqStatement {
-                c_e: c_e.clone(),
+                c_e,
                 c_e_q: statement.c_e_q.clone(),
             },
         )?;

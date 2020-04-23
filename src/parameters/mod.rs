@@ -76,7 +76,7 @@ impl Parameters {
                 }
             }
 
-            return None;
+            None
         })();
         let (prime_bits, security_soundness_zk) =
             derived.ok_or(ParametersError::InvalidParameters)?;
