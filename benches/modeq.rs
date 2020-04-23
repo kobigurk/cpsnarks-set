@@ -4,10 +4,11 @@ use cpsnarks_set::commitments::Commitment;
 use cpsnarks_set::{
     parameters::Parameters,
     protocols::{
-        hash_to_prime::snark_range::Protocol as HPProtocol,
-        modeq::{Protocol, Statement, Witness},
+        hash_to_prime::{
+            snark_range::Protocol as HPProtocol,
+        },
+        modeq::{Protocol, Statement, Witness, transcript::{TranscriptProverChannel, TranscriptVerifierChannel}},
     },
-    transcript::modeq::{TranscriptProverChannel, TranscriptVerifierChannel},
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 use merlin::Transcript;
