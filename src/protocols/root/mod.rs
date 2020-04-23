@@ -209,7 +209,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
                 + 1) as u32,
         ));
 
-        let s_e_expected_left = Integer::from(-s_e_expected_right.clone());
+        let s_e_expected_left: Integer = -s_e_expected_right.clone();
         let is_s_e_in_range =
             message3.s_e >= s_e_expected_left && message3.s_e <= s_e_expected_right;
 
