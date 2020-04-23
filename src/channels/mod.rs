@@ -1,4 +1,3 @@
-pub mod membership;
 pub mod nonmembership;
 
 use std::cell::{BorrowError, BorrowMutError};

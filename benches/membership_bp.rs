@@ -5,9 +5,11 @@ use cpsnarks_set::{
     parameters::Parameters,
     protocols::{
         hash_to_prime::bp::Protocol as HPProtocol,
-        membership::{Protocol, Statement, Witness},
+        membership::{
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            Protocol, Statement, Witness,
+        },
     },
-    transcript::membership::{TranscriptProverChannel, TranscriptVerifierChannel},
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
