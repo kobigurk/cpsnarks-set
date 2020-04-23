@@ -1,10 +1,8 @@
-pub mod coprime;
-pub mod hash_to_prime;
-pub mod membership;
-pub mod modeq;
-pub mod nonmembership;
-pub mod root;
-
+//! Channels provide a way for protocol to act as interactive protocol.
+//!
+//! Each protocol defines the messages the prover and verifiers send, such that
+//! the prover receives a verifier channel and the prover receives a verifier
+//! channel.
 use std::cell::{BorrowError, BorrowMutError};
 
 quick_error! {

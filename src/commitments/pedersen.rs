@@ -1,3 +1,5 @@
+//! Pedersen commitment over elliptic curves.
+
 use crate::commitments::{Commitment, CommitmentError};
 use crate::utils::{curve::CurvePointProjective, integer_to_bigint};
 use rand::{CryptoRng, RngCore};

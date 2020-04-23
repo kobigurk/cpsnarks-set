@@ -1,21 +1,21 @@
-use crate::utils::{
-    bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes, ConvertibleUnknownOrderGroup,
+//! Transcripts transform the interactive protocols into non-interactive using
+//! the Merlin transcript
+//!
+//! Each protocol defines a transcript that defines a domain separator, how to
+//! consume each message in the protocol and how to generate challenge scalars.
+use crate::{
+    protocols::{
+        hash_to_prime::transcript::TranscriptProtocolHashToPrime,
+        modeq::transcript::TranscriptProtocolModEq, root::transcript::TranscriptProtocolRoot,
+    },
+    utils::{
+        bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes,
+        ConvertibleUnknownOrderGroup,
+    },
 };
 use merlin::Transcript;
 use rug::integer::Order;
 use rug::Integer;
-
-pub mod coprime;
-pub mod hash_to_prime;
-pub mod membership;
-pub mod modeq;
-pub mod nonmembership;
-pub mod root;
-
-pub use hash_to_prime::TranscriptProtocolHashToPrime;
-pub use membership::TranscriptProtocolMembership;
-pub use modeq::TranscriptProtocolModEq;
-pub use root::TranscriptProtocolRoot;
 
 quick_error! {
     #[derive(Debug)]

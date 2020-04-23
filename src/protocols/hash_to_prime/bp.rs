@@ -1,9 +1,11 @@
+//! Bulletproofs-based range proof.
+
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
@@ -210,8 +212,11 @@ mod tests {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::{bp::Protocol as HPProtocol, HashToPrimeProtocol},
-        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::{
+            bp::Protocol as HPProtocol,
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            HashToPrimeProtocol,
+        },
     };
     use accumulator::group::Rsa2048;
     use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};

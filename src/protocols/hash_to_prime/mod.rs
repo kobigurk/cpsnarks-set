@@ -1,12 +1,16 @@
+//! Implements an abstract hash-to-prime protocol, which can also be just a range proof.
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::{pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{ProofError, SetupError, VerificationError},
     utils::curve::CurvePointProjective,
 };
+use channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel};
 use rand::{CryptoRng, RngCore};
 use rug::Integer;
+
+pub mod channel;
+pub mod transcript;
 
 #[cfg(feature = "zexe")]
 pub mod snark_hash;

@@ -6,9 +6,11 @@ use cpsnarks_set::{
     parameters::Parameters,
     protocols::{
         hash_to_prime::snark_range::Protocol as HPProtocol,
-        root::{Protocol, Statement, Witness},
+        root::{
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            Protocol, Statement, Witness,
+        },
     },
-    transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 use merlin::Transcript;

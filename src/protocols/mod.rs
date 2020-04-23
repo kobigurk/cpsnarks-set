@@ -1,3 +1,5 @@
+//! All the protocol implementations.
+
 use crate::{
     channels::ChannelError, commitments::CommitmentError,
     protocols::hash_to_prime::HashToPrimeError,

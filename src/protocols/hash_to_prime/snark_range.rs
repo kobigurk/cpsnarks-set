@@ -1,9 +1,11 @@
+//! LegoGroth16-based range proof.
+
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
@@ -144,8 +146,11 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::{snark_range::Protocol as HPProtocol, HashToPrimeProtocol},
-        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::{
+            snark_range::Protocol as HPProtocol,
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            HashToPrimeProtocol,
+        },
         utils::integer_to_bigint_mod_q,
     };
     use accumulator::group::Rsa2048;

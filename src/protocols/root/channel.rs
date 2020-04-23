@@ -1,5 +1,5 @@
-use super::ChannelError;
 use crate::{
+    channels::ChannelError,
     protocols::root::{Message1, Message2, Message3},
     utils::ConvertibleUnknownOrderGroup,
 };

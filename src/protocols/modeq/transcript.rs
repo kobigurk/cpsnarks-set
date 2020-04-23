@@ -1,13 +1,13 @@
-use super::{
-    TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve,
-    TranscriptProtocolInteger,
-};
 use crate::{
-    channels::{
-        modeq::{ModEqProverChannel, ModEqVerifierChannel},
-        ChannelError,
+    channels::ChannelError,
+    protocols::modeq::{
+        channel::{ModEqProverChannel, ModEqVerifierChannel},
+        CRSModEq, Message1, Message2, Proof,
     },
-    protocols::modeq::{CRSModEq, Message1, Message2, Proof},
+    transcript::{
+        TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve,
+        TranscriptProtocolInteger,
+    },
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };
 use merlin::Transcript;

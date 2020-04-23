@@ -1,13 +1,21 @@
+//! Derives secure parameters given a desired security level or curve parameters.
+
 use crate::utils::curve::Field;
 use std::fmt;
-
 #[derive(Clone, Debug)]
 pub struct Parameters {
+    /// Desired security level. It's an upper bound rather than the final
+    /// security level.
     pub security_level: u16,
+    /// Zero-knowledge security.
     pub security_zk: u16,
+    /// Soundness security.
     pub security_soundness: u16,
+    /// Size of the elements in the set, as a result of the hash-to-prime or
+    /// just size in case of prime elements.
     pub hash_to_prime_bits: u16, // μ
-    pub field_size_bits: u16,    // ν
+    /// Size of the field the element are taken from.
+    pub field_size_bits: u16, // ν
 }
 
 impl fmt::Display for Parameters {
@@ -30,6 +38,7 @@ quick_error! {
 }
 
 impl Parameters {
+    /// Derive parameters for a desired security level.
     pub fn from_security_level(security_level: u16) -> Result<Parameters, ParametersError> {
         let parameters = Parameters {
             security_level,
@@ -43,6 +52,7 @@ impl Parameters {
         Ok(parameters)
     }
 
+    /// Derive parameters based on a curve.
     pub fn from_curve<P: Field>() -> Result<(Parameters, u16), ParametersError> {
         let field_size_bits = P::size_in_bits() as u16;
         let security_level = field_size_bits / 2;
@@ -58,7 +68,8 @@ impl Parameters {
         Ok((parameters, security_level))
     }
 
-    // based on page 33 in https://eprint.iacr.org/2019/1255.pdf
+    /// Derive parameters based on a curve and desired small prime bit size.
+    /// Based on section 4.5 of the paper.
     pub fn from_curve_and_small_prime_size<P: Field>(
         prime_bits_min: u16,
         prime_bits_max: u16,
@@ -93,8 +104,9 @@ impl Parameters {
         Ok((parameters, security_level))
     }
 
+    /// Check the parameters are valid according to section 4.5 of
+    /// the paper.
     pub fn is_valid(&self) -> Result<(), ParametersError> {
-        // See page 32 in https://eprint.iacr.org/2019/1255.pdf
         let d = 1 + (self.security_zk + self.security_soundness + 2) / self.hash_to_prime_bits;
         if d * self.hash_to_prime_bits + 2 <= self.field_size_bits {
             Ok(())

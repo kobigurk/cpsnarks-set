@@ -1,32 +1,36 @@
-use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 use crate::{
-    channels::{
-        hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-        membership::{MembershipProverChannel, MembershipVerifierChannel},
-        modeq::{ModEqProverChannel, ModEqVerifierChannel},
-        root::{RootProverChannel, RootVerifierChannel},
-        ChannelError,
-    },
+    channels::ChannelError,
     commitments::{integer::IntegerCommitment, Commitment},
     protocols::{
-        hash_to_prime::HashToPrimeProtocol,
-        membership::{Proof, CRS},
-    },
-    transcript::{
         hash_to_prime::{
-            TranscriptProtocolHashToPrime,
-            TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
-            TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
+            transcript::{
+                TranscriptProtocolHashToPrime,
+                TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
+                TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
+            },
+            HashToPrimeProtocol,
+        },
+        membership::{
+            channel::{MembershipProverChannel, MembershipVerifierChannel},
+            Proof, CRS,
         },
         modeq::{
-            TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
-            TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
+            channel::{ModEqProverChannel, ModEqVerifierChannel},
+            transcript::{
+                TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
+                TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
+            },
         },
         root::{
-            TranscriptProtocolRoot, TranscriptProverChannel as RootTranscriptProverChannel,
-            TranscriptVerifierChannel as RootTranscriptVerifierChannel,
+            channel::{RootProverChannel, RootVerifierChannel},
+            transcript::{
+                TranscriptProtocolRoot, TranscriptProverChannel as RootTranscriptProverChannel,
+                TranscriptVerifierChannel as RootTranscriptVerifierChannel,
+            },
         },
     },
+    transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger},
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };
 use merlin::Transcript;

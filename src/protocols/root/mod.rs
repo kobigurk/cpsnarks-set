@@ -1,12 +1,16 @@
+//! Implements root, to be used in the membership protocol.
 use crate::{
-    channels::root::{RootProverChannel, RootVerifierChannel},
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,
     protocols::{ProofError, VerificationError},
     utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
+use channel::{RootProverChannel, RootVerifierChannel};
 use rug::rand::MutRandState;
 use rug::Integer;
+
+pub mod channel;
+pub mod transcript;
 
 #[derive(Clone)]
 pub struct CRSRoot<G: ConvertibleUnknownOrderGroup> {
@@ -227,8 +231,10 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-        transcript::root::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            hash_to_prime::snark_range::Protocol as HPProtocol,
+            root::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::{
         group::{Group, Rsa2048},

@@ -1,9 +1,11 @@
+//! LegoGroth16-based hash-to-prime proof, with Blake2s as the hash.
+
 use crate::{
-    channels::hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
@@ -305,8 +307,11 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::{snark_hash::Protocol as HPProtocol, HashToPrimeProtocol},
-        transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::hash_to_prime::{
+            snark_hash::Protocol as HPProtocol,
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            HashToPrimeProtocol,
+        },
         utils::{bigint_to_integer, integer_to_bigint_mod_q},
     };
     use accumulator::group::Rsa2048;

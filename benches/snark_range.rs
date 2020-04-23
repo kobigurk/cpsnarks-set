@@ -3,8 +3,11 @@ use algebra::bls12_381::{Bls12_381, G1Projective};
 use cpsnarks_set::commitments::Commitment;
 use cpsnarks_set::{
     parameters::Parameters,
-    protocols::hash_to_prime::{snark_range::Protocol, HashToPrimeProtocol, Statement, Witness},
-    transcript::hash_to_prime::{TranscriptProverChannel, TranscriptVerifierChannel},
+    protocols::hash_to_prime::{
+        snark_range::Protocol,
+        transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        HashToPrimeProtocol, Statement, Witness,
+    },
 };
 use criterion::{criterion_group, criterion_main, Criterion};
 use merlin::Transcript;

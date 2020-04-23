@@ -1,32 +1,37 @@
-use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 use crate::{
-    channels::{
-        coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
-        hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-        modeq::{ModEqProverChannel, ModEqVerifierChannel},
-        nonmembership::{NonMembershipProverChannel, NonMembershipVerifierChannel},
-        ChannelError,
-    },
+    channels::ChannelError,
     commitments::{integer::IntegerCommitment, Commitment},
     protocols::{
-        hash_to_prime::HashToPrimeProtocol,
-        nonmembership::{Proof, CRS},
-    },
-    transcript::{
         coprime::{
-            TranscriptProtocolCoprime, TranscriptProverChannel as CoprimeTranscriptProverChannel,
-            TranscriptVerifierChannel as CoprimeTranscriptVerifierChannel,
+            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
+            transcript::{
+                TranscriptProtocolCoprime,
+                TranscriptProverChannel as CoprimeTranscriptProverChannel,
+                TranscriptVerifierChannel as CoprimeTranscriptVerifierChannel,
+            },
         },
+        hash_to_prime::HashToPrimeProtocol,
         hash_to_prime::{
-            TranscriptProtocolHashToPrime,
-            TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
-            TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
+            transcript::{
+                TranscriptProtocolHashToPrime,
+                TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
+                TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
+            },
         },
         modeq::{
-            TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
-            TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
+            channel::{ModEqProverChannel, ModEqVerifierChannel},
+            transcript::{
+                TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
+                TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
+            },
+        },
+        nonmembership::{
+            channel::{NonMembershipProverChannel, NonMembershipVerifierChannel},
+            Proof, CRS,
         },
     },
+    transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger},
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };
 use merlin::Transcript;

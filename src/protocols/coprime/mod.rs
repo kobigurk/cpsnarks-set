@@ -1,12 +1,16 @@
+//! Implements coprime, to be used in the nonmembership protocol.
 use crate::{
-    channels::coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,
     protocols::{CRSError, ProofError, VerificationError},
     utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
+use channel::{CoprimeProverChannel, CoprimeVerifierChannel};
 use rug::rand::MutRandState;
 use rug::Integer;
+
+pub mod channel;
+pub mod transcript;
 
 #[derive(Clone)]
 pub struct CRSCoprime<G: ConvertibleUnknownOrderGroup> {
@@ -290,8 +294,10 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-        transcript::coprime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            coprime::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            hash_to_prime::snark_range::Protocol as HPProtocol,
+        },
     };
     use accumulator::{
         group::{Group, Rsa2048},
