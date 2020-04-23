@@ -1,16 +1,16 @@
 use crate::{
-    channels::{
-        root::{RootProverChannel, RootVerifierChannel},
-        ChannelError,
+    channels::ChannelError,
+    protocols::root::{
+        CRSRoot, Message1, Message2, Message3, Proof,
+        channel::{RootProverChannel, RootVerifierChannel},
     },
-    protocols::root::{CRSRoot, Message1, Message2, Message3, Proof},
     utils::ConvertibleUnknownOrderGroup,
+    transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger},
 };
 use merlin::Transcript;
 use rug::Integer;
 use std::cell::RefCell;
 
-use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 pub trait TranscriptProtocolRoot<G: ConvertibleUnknownOrderGroup>:
     TranscriptProtocolInteger<G> + TranscriptProtocolChallenge
 {

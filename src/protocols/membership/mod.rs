@@ -1,5 +1,5 @@
 use crate::{
-    channels::{hash_to_prime::*, membership::*, modeq::*, root::*},
+    channels::{hash_to_prime::*, membership::*, modeq::*},
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{
@@ -14,6 +14,7 @@ use crate::{
         root::{
             CRSRoot, Proof as RootProof, Protocol as RootProtocol, Statement as RootStatement,
             Witness as RootWitness,
+            channel::{RootProverChannel, RootVerifierChannel},
         },
         ProofError, SetupError, VerificationError,
     },

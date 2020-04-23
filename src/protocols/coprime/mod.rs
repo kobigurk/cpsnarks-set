@@ -1,9 +1,10 @@
 use crate::{
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,
-    protocols::{CRSError, ProofError, VerificationError, coprime::channel::{CoprimeProverChannel, CoprimeVerifierChannel}},
+    protocols::{CRSError, ProofError, VerificationError},
     utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
+use channel::{CoprimeProverChannel, CoprimeVerifierChannel};
 use rug::rand::MutRandState;
 use rug::Integer;
 
