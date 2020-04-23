@@ -1,7 +1,7 @@
 CPSNARKs-Set
 ------------
 
-# Overview
+## Overview
 
 **The library is not ready for production use!**
 
@@ -23,9 +23,9 @@ The protocols are composed out of the following subprotocols:
   * [snark\_hash](src/protocols/hash_to_prime/bp.rs) - Bulletproofs-based range proof.
   * [bp](src/protocols/hash_to_prime/snark_hash.rs) - LegoGroth16-based hash-to-prime proof.
 
-# Usage
+## Usage
 
-## Tests
+### Tests
 
 The following commands assume you have a recent stable Rust toolchain installed, e.g. 1.42.0. The Bulletproofs implementation also requires a nightly toolchain.
 
@@ -33,11 +33,11 @@ To run the tests for membership and non-membership protocols on BLS12-381, run `
 
 To run the tests for membership and non-membership protocols on Ristretto, run `cargo +nigthly test --release --no-default-features --features dalek`.
 
-## Benchmarks
+### Benchmarks
 
 The library contains a number of benchmarks:
 
-### Set membership
+#### Set membership
 
 * [membership\_prime](benches/membership_prime.rs) - benchmarks RSA-based set membership when the elements are prime with a LegoGroth16 range proof.
 * [membership\_prime\_60](benches/membership_prime_60.rs) - benchmarks RSA-based set membership when the elements are prime and are also small (around 60 bits) with a LegoGroth16 range proof.
@@ -47,12 +47,12 @@ The library contains a number of benchmarks:
 * [membership\_class](benches/membership_class.rs) - benchmarks class groups-based set membership when the elements are prime with a LegoGroth16 range proof. This is slow and experimental and the paper doesn't prove its security.
 
 
-### Set non-membership
+#### Set non-membership
 * [nonmembership\_prime](benches/nonmembership_prime.rs) - benchmarks RSA-based set non-membership when the elements are prime with a LegoGroth16 range proof.
 * [nonmembership\_bp](benches/nonmembership_bp.rs) - benchmarks RSA-based set non-membership when the elements are prime with a Bulletproofs range proof.
 * [nonmembership\_hash](benches/nonmembership_hash.rs) - benchmarks RSA-based set non-membership when the elements are not prime and a Blake2s-based hash-to-prime is performed.
 
-# Libraries
+## Libraries
 
 We've implemented [LegoGroth16](https://github.com/kobigurk/legogro16) on top of [Zexe library](https://github.com/scipr-lab/zexe).
 
@@ -60,11 +60,11 @@ We've modified the Cambrian Tech's accumulator library. The modified version is 
 
 We've modifies librustzcash to get benchmarks for Merkle tree-based membership proofs. The modified version is [available here](https://github.com/kobigurk/cpsnarks-librustzcash). To run the benchmarks use `cargo run --release --example merkle_sha` for SHA256-based trees and `cargo run --release --example merkle_pedersen` for Pedersen hash-based trees.
 
-# License
+## License
 
 The library is licensed under [Apache License Version 2.0](LICENSE).
 
-# Reference paper
+## Reference paper
 
 [Zero-Knowledge Proofs for Set Membership: Efficient, Succinct, Modular](https://eprint.iacr.org/2019/1255.pdf)
 [Daniel Benarroch](https://github.com/daniben31), [Matteo Campanelli](https://www.github.com/matteocam), [Dario Fiore](https://github.com/dariofiore), [Kobi Gurkan](https://github.com/kobigurk), [Dimitris Kolonelos](https://software.imdea.org/people/dimitris.kolonelos/index.html).
