@@ -1,3 +1,5 @@
+//! Integer commitment over groups of unknown order.
+
 use crate::{
     commitments::{Commitment, CommitmentError},
     utils::ConvertibleUnknownOrderGroup,

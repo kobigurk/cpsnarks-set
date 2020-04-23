@@ -1,3 +1,5 @@
+//! LegoGroth16-based range proof.
+
 use crate::{
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,

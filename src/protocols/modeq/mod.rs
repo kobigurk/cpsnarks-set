@@ -1,3 +1,4 @@
+//! Implements ModEq.
 use crate::commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment};
 use crate::{
     parameters::Parameters,

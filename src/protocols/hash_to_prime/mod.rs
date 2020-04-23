@@ -1,3 +1,4 @@
+//! Implements an abstract hash-to-prime protocol, which can also be just a range proof.
 use crate::{
     commitments::{pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,

@@ -1,3 +1,4 @@
+//! Implements coprime, to be used in the nonmembership protocol.
 use crate::{
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,

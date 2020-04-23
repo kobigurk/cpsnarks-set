@@ -1,3 +1,5 @@
+//! Bulletproofs-based range proof.
+
 use crate::{
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,

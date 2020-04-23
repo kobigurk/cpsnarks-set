@@ -1,3 +1,5 @@
+//! LegoGroth16-based hash-to-prime proof, with Blake2s as the hash.
+
 use crate::{
     commitments::pedersen::PedersenCommitment,
     parameters::Parameters,

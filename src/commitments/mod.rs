@@ -1,3 +1,5 @@
+//! Implements integer and Pedersen commitments.
+
 use rug::Integer;
 
 pub mod integer;

@@ -1,3 +1,4 @@
+//! Implements CPMemRSA and CPMemRSAPrm.
 use crate::{
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,

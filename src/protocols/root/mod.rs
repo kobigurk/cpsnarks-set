@@ -1,3 +1,4 @@
+//! Implements root, to be used in the membership protocol.
 use crate::{
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,

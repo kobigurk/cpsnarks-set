@@ -1,3 +1,4 @@
+//! Implements CPNonMemRSA and CPNonMemRSAPrm.
 use crate::{
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,

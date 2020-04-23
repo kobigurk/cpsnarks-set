@@ -1,3 +1,5 @@
+//! A simple abstraction for curves and fields, to wrap the Zexe and dalek-cryptography curves.
+
 use rand::{CryptoRng, RngCore};
 use rug::Integer;
 
