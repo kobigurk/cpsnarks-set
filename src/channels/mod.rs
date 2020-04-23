@@ -1,6 +1,5 @@
 pub mod hash_to_prime;
 pub mod membership;
-pub mod modeq;
 pub mod nonmembership;
 
 use std::cell::{BorrowError, BorrowMutError};

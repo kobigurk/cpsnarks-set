@@ -1,8 +1,9 @@
 use crate::commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment};
 use crate::{
-    channels::modeq::{ModEqProverChannel, ModEqVerifierChannel},
     parameters::Parameters,
-    protocols::{ProofError, VerificationError},
+    protocols::{
+        ProofError, VerificationError,
+    },
     utils::{
         bigint_to_integer,
         curve::{CurvePointProjective, Field},
@@ -12,6 +13,10 @@ use crate::{
 };
 use rand::{CryptoRng, RngCore};
 use rug::{rand::MutRandState, Integer};
+use channel::{ModEqProverChannel, ModEqVerifierChannel};
+
+pub mod channel;
+pub mod transcript;
 
 #[derive(Clone)]
 pub struct CRSModEq<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> {
@@ -147,8 +152,10 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-        transcript::modeq::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            hash_to_prime::snark_range::Protocol as HPProtocol,
+            modeq::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::group::Rsa2048;
     use algebra::bls12_381::{Bls12_381, G1Projective};

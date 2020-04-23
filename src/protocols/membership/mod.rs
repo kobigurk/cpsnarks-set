@@ -1,5 +1,5 @@
 use crate::{
-    channels::{hash_to_prime::*, membership::*, modeq::*},
+    channels::{hash_to_prime::*, membership::*},
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{
@@ -10,6 +10,7 @@ use crate::{
         modeq::{
             CRSModEq, Proof as ModEqProof, Protocol as ModEqProtocol, Statement as ModEqStatement,
             Witness as ModEqWitness,
+            channel::{ModEqProverChannel, ModEqVerifierChannel},
         },
         root::{
             CRSRoot, Proof as RootProof, Protocol as RootProtocol, Statement as RootStatement,

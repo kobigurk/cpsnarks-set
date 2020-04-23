@@ -2,7 +2,10 @@ use crate::{
     utils::{
         bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes, ConvertibleUnknownOrderGroup,
     },
-    protocols::root::transcript::TranscriptProtocolRoot,
+    protocols::{
+        root::transcript::TranscriptProtocolRoot,
+        modeq::transcript::TranscriptProtocolModEq,
+    },
 };
 use merlin::Transcript;
 use rug::integer::Order;
@@ -10,12 +13,10 @@ use rug::Integer;
 
 pub mod hash_to_prime;
 pub mod membership;
-pub mod modeq;
 pub mod nonmembership;
 
 pub use hash_to_prime::TranscriptProtocolHashToPrime;
 pub use membership::TranscriptProtocolMembership;
-pub use modeq::TranscriptProtocolModEq;
 
 quick_error! {
     #[derive(Debug)]

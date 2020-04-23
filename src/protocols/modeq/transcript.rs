@@ -1,14 +1,8 @@
-use super::{
-    TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve,
-    TranscriptProtocolInteger,
-};
 use crate::{
-    channels::{
-        modeq::{ModEqProverChannel, ModEqVerifierChannel},
-        ChannelError,
-    },
-    protocols::modeq::{CRSModEq, Message1, Message2, Proof},
+    channels::ChannelError,
+    protocols::modeq::{CRSModEq, Message1, Message2, Proof, channel::{ModEqProverChannel, ModEqVerifierChannel} },
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
+    transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolCurve, TranscriptProtocolInteger},
 };
 use merlin::Transcript;
 use rug::Integer;
