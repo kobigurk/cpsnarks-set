@@ -4,9 +4,9 @@ use crate::{
     protocols::{ProofError, SetupError, VerificationError},
     utils::curve::CurvePointProjective,
 };
+use channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel};
 use rand::{CryptoRng, RngCore};
 use rug::Integer;
-use channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel};
 
 pub mod channel;
 pub mod transcript;

@@ -4,9 +4,9 @@ use crate::{
     protocols::{ProofError, VerificationError},
     utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
+use channel::{RootProverChannel, RootVerifierChannel};
 use rug::rand::MutRandState;
 use rug::Integer;
-use channel::{RootProverChannel, RootVerifierChannel};
 
 pub mod channel;
 pub mod transcript;

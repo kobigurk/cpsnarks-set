@@ -1,7 +1,7 @@
 use crate::{
+    channels::ChannelError,
     protocols::modeq::{Message1, Message2},
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
-    channels::ChannelError,
 };
 use rug::Integer;
 

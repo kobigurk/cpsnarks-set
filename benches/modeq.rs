@@ -4,10 +4,11 @@ use cpsnarks_set::commitments::Commitment;
 use cpsnarks_set::{
     parameters::Parameters,
     protocols::{
-        hash_to_prime::{
-            snark_range::Protocol as HPProtocol,
+        hash_to_prime::snark_range::Protocol as HPProtocol,
+        modeq::{
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            Protocol, Statement, Witness,
         },
-        modeq::{Protocol, Statement, Witness, transcript::{TranscriptProverChannel, TranscriptVerifierChannel}},
     },
 };
 use criterion::{criterion_group, criterion_main, Criterion};

@@ -3,8 +3,8 @@ use crate::{
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
-            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
             channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
+            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
     },
@@ -305,7 +305,11 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::{snark_hash::Protocol as HPProtocol, HashToPrimeProtocol, transcript::{TranscriptProverChannel, TranscriptVerifierChannel}},
+        protocols::hash_to_prime::{
+            snark_hash::Protocol as HPProtocol,
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            HashToPrimeProtocol,
+        },
         utils::{bigint_to_integer, integer_to_bigint_mod_q},
     };
     use accumulator::group::Rsa2048;

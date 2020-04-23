@@ -1,11 +1,11 @@
 use crate::{
     channels::ChannelError,
     protocols::root::{
-        CRSRoot, Message1, Message2, Message3, Proof,
         channel::{RootProverChannel, RootVerifierChannel},
+        CRSRoot, Message1, Message2, Message3, Proof,
     },
-    utils::ConvertibleUnknownOrderGroup,
     transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger},
+    utils::ConvertibleUnknownOrderGroup,
 };
 use merlin::Transcript;
 use rug::Integer;

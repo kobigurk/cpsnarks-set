@@ -4,19 +4,19 @@ use crate::{
     parameters::Parameters,
     protocols::{
         coprime::{
+            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
             CRSCoprime, Proof as CoprimeProof, Protocol as CoprimeProtocol,
             Statement as CoprimeStatement, Witness as CoprimeWitness,
-            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
         },
         hash_to_prime::{
+            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol,
             Statement as HashToPrimeStatement, Witness as HashToPrimeWitness,
-            channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
         },
         modeq::{
+            channel::{ModEqProverChannel, ModEqVerifierChannel},
             CRSModEq, Proof as ModEqProof, Protocol as ModEqProtocol, Statement as ModEqStatement,
             Witness as ModEqWitness,
-            channel::{ModEqProverChannel, ModEqVerifierChannel},
         },
         ProofError, SetupError, VerificationError,
     },

@@ -6,7 +6,10 @@ use cpsnarks_set::{
     parameters::Parameters,
     protocols::{
         hash_to_prime::snark_range::Protocol as HPProtocol,
-        root::{Protocol, Statement, Witness, transcript::{TranscriptProverChannel, TranscriptVerifierChannel}},
+        root::{
+            transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            Protocol, Statement, Witness,
+        },
     },
 };
 use criterion::{criterion_group, criterion_main, Criterion};

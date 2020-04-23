@@ -1,11 +1,11 @@
 use crate::{
-    utils::{
-        bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes, ConvertibleUnknownOrderGroup,
-    },
     protocols::{
-        root::transcript::TranscriptProtocolRoot,
-        modeq::transcript::TranscriptProtocolModEq,
         hash_to_prime::transcript::TranscriptProtocolHashToPrime,
+        modeq::transcript::TranscriptProtocolModEq, root::transcript::TranscriptProtocolRoot,
+    },
+    utils::{
+        bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes,
+        ConvertibleUnknownOrderGroup,
     },
 };
 use merlin::Transcript;

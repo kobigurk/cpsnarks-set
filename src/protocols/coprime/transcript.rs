@@ -1,13 +1,11 @@
 use crate::{
     channels::ChannelError,
-    protocols::{
-        coprime::{
-            CRSCoprime, Message1, Message2, Message3, Proof,
-            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
-        },
+    protocols::coprime::{
+        channel::{CoprimeProverChannel, CoprimeVerifierChannel},
+        CRSCoprime, Message1, Message2, Message3, Proof,
     },
-    utils::ConvertibleUnknownOrderGroup,
     transcript::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger},
+    utils::ConvertibleUnknownOrderGroup,
 };
 use merlin::Transcript;
 use rug::Integer;

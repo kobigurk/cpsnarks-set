@@ -3,8 +3,8 @@ use crate::{
     parameters::Parameters,
     protocols::{
         hash_to_prime::{
-            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
             channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
+            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
     },
@@ -145,8 +145,9 @@ mod test {
         commitments::Commitment,
         parameters::Parameters,
         protocols::hash_to_prime::{
-            snark_range::Protocol as HPProtocol, HashToPrimeProtocol,
+            snark_range::Protocol as HPProtocol,
             transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            HashToPrimeProtocol,
         },
         utils::integer_to_bigint_mod_q,
     };

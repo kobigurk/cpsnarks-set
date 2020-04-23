@@ -1,9 +1,7 @@
 use crate::commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment};
 use crate::{
     parameters::Parameters,
-    protocols::{
-        ProofError, VerificationError,
-    },
+    protocols::{ProofError, VerificationError},
     utils::{
         bigint_to_integer,
         curve::{CurvePointProjective, Field},
@@ -11,9 +9,9 @@ use crate::{
         ConvertibleUnknownOrderGroup,
     },
 };
+use channel::{ModEqProverChannel, ModEqVerifierChannel};
 use rand::{CryptoRng, RngCore};
 use rug::{rand::MutRandState, Integer};
-use channel::{ModEqProverChannel, ModEqVerifierChannel};
 
 pub mod channel;
 pub mod transcript;

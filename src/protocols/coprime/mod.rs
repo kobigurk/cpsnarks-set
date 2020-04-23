@@ -294,8 +294,8 @@ mod test {
         commitments::Commitment,
         parameters::Parameters,
         protocols::{
-            hash_to_prime::snark_range::Protocol as HPProtocol,
             coprime::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+            hash_to_prime::snark_range::Protocol as HPProtocol,
         },
     };
     use accumulator::{

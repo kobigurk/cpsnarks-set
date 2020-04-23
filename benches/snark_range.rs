@@ -4,7 +4,9 @@ use cpsnarks_set::commitments::Commitment;
 use cpsnarks_set::{
     parameters::Parameters,
     protocols::hash_to_prime::{
-        snark_range::Protocol, HashToPrimeProtocol, Statement, Witness, transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        snark_range::Protocol,
+        transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        HashToPrimeProtocol, Statement, Witness,
     },
 };
 use criterion::{criterion_group, criterion_main, Criterion};

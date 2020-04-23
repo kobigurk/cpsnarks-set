@@ -7,15 +7,22 @@ use crate::{
     commitments::{integer::IntegerCommitment, Commitment},
     protocols::{
         hash_to_prime::{
-            HashToPrimeProtocol,
             channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
             transcript::{
                 TranscriptProtocolHashToPrime,
                 TranscriptProverChannel as HashToPrimeTranscriptProverChannel,
                 TranscriptVerifierChannel as HashToPrimeTranscriptVerifierChannel,
             },
+            HashToPrimeProtocol,
         },
         membership::{Proof, CRS},
+        modeq::{
+            channel::{ModEqProverChannel, ModEqVerifierChannel},
+            transcript::{
+                TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
+                TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
+            },
+        },
         root::{
             channel::{RootProverChannel, RootVerifierChannel},
             transcript::{
@@ -23,13 +30,6 @@ use crate::{
                 TranscriptVerifierChannel as RootTranscriptVerifierChannel,
             },
         },
-        modeq::{
-            channel::{ModEqProverChannel, ModEqVerifierChannel},
-            transcript::{
-                TranscriptProtocolModEq, TranscriptProverChannel as ModEqTranscriptProverChannel,
-                TranscriptVerifierChannel as ModEqTranscriptVerifierChannel,
-            },
-        }
     },
     utils::{curve::CurvePointProjective, ConvertibleUnknownOrderGroup},
 };
