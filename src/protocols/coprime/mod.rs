@@ -1,12 +1,14 @@
 use crate::{
-    channels::coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
     commitments::{integer::IntegerCommitment, Commitment},
     parameters::Parameters,
-    protocols::{CRSError, ProofError, VerificationError},
+    protocols::{CRSError, ProofError, VerificationError, coprime::channel::{CoprimeProverChannel, CoprimeVerifierChannel}},
     utils::{random_symmetric_range, ConvertibleUnknownOrderGroup},
 };
 use rug::rand::MutRandState;
 use rug::Integer;
+
+pub mod channel;
+pub mod transcript;
 
 #[derive(Clone)]
 pub struct CRSCoprime<G: ConvertibleUnknownOrderGroup> {
@@ -290,8 +292,10 @@ mod test {
     use crate::{
         commitments::Commitment,
         parameters::Parameters,
-        protocols::hash_to_prime::snark_range::Protocol as HPProtocol,
-        transcript::coprime::{TranscriptProverChannel, TranscriptVerifierChannel},
+        protocols::{
+            hash_to_prime::snark_range::Protocol as HPProtocol,
+            coprime::transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
+        },
     };
     use accumulator::{
         group::{Group, Rsa2048},

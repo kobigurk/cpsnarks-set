@@ -1,7 +1,7 @@
-use super::ChannelError;
 use crate::{
     protocols::coprime::{Message1, Message2, Message3},
     utils::ConvertibleUnknownOrderGroup,
+    channels::ChannelError,
 };
 use rug::Integer;
 

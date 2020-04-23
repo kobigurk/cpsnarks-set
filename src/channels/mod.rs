@@ -1,4 +1,3 @@
-pub mod coprime;
 pub mod hash_to_prime;
 pub mod membership;
 pub mod modeq;

@@ -1,7 +1,6 @@
 use super::{TranscriptChannelError, TranscriptProtocolChallenge, TranscriptProtocolInteger};
 use crate::{
     channels::{
-        coprime::{CoprimeProverChannel, CoprimeVerifierChannel},
         hash_to_prime::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
         modeq::{ModEqProverChannel, ModEqVerifierChannel},
         nonmembership::{NonMembershipProverChannel, NonMembershipVerifierChannel},
@@ -11,12 +10,15 @@ use crate::{
     protocols::{
         hash_to_prime::HashToPrimeProtocol,
         nonmembership::{Proof, CRS},
+        coprime::{
+            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
+            transcript::{
+                TranscriptProtocolCoprime, TranscriptProverChannel as CoprimeTranscriptProverChannel,
+                TranscriptVerifierChannel as CoprimeTranscriptVerifierChannel,
+            },
+        },
     },
     transcript::{
-        coprime::{
-            TranscriptProtocolCoprime, TranscriptProverChannel as CoprimeTranscriptProverChannel,
-            TranscriptVerifierChannel as CoprimeTranscriptVerifierChannel,
-        },
         hash_to_prime::{
             TranscriptProtocolHashToPrime,
             TranscriptProverChannel as HashToPrimeTranscriptProverChannel,

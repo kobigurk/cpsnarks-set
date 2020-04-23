@@ -1,11 +1,12 @@
 use crate::{
-    channels::{coprime::*, hash_to_prime::*, modeq::*, nonmembership::*},
+    channels::{hash_to_prime::*, modeq::*, nonmembership::*},
     commitments::{integer::IntegerCommitment, pedersen::PedersenCommitment, Commitment},
     parameters::Parameters,
     protocols::{
         coprime::{
             CRSCoprime, Proof as CoprimeProof, Protocol as CoprimeProtocol,
             Statement as CoprimeStatement, Witness as CoprimeWitness,
+            channel::{CoprimeProverChannel, CoprimeVerifierChannel},
         },
         hash_to_prime::{
             CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol,

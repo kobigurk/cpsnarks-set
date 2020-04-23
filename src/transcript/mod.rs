@@ -5,7 +5,6 @@ use merlin::Transcript;
 use rug::integer::Order;
 use rug::Integer;
 
-pub mod coprime;
 pub mod hash_to_prime;
 pub mod membership;
 pub mod modeq;
