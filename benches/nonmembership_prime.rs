@@ -103,7 +103,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
-    c.bench_function("nonmembership_prime protocol", |be| {
+    c.bench_function("nonmembership_prime protocol", move |be| {
         be.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"nonmembership"));
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);

@@ -64,7 +64,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
-    c.bench_function("snark_range protocol", |b| {
+    c.bench_function("snark_range protocol", move |b| {
         b.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"hash_to_prime"));
             let statement = Statement { c_e_q: commitment };

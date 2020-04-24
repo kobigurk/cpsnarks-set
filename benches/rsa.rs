@@ -11,7 +11,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut rng1 = RandState::new();
     rng1.seed(&Integer::from(13));
 
-    c.bench_function("RSA exponentiation", |b| {
+    c.bench_function("RSA exponentiation", move |b| {
         b.iter(|| {
             let e = Rsa2048::elem(&random_between(
                 &mut rng1,

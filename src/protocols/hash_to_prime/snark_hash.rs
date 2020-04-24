@@ -18,7 +18,7 @@ use crate::{
 use algebra_core::{AffineCurve, BigInteger, One, PairingEngine, PrimeField, UniformRand};
 use blake2::Blake2s;
 use crypto_primitives::prf::blake2s::constraints::blake2s_gadget;
-use digest::{FixedOutput, Input};
+use digest::{Digest, FixedOutput};
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
 use r1cs_std::{
     alloc::AllocGadget, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpGadget,
@@ -271,8 +271,8 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
                 .into_iter()
                 .rev()
                 .collect::<Vec<_>>();
-            let mut hasher = Blake2s::new_keyed(&[], 32);
-            hasher.process(&bytes_to_hash);
+            let mut hasher = Blake2s::default();
+            hasher.input(&bytes_to_hash);
             let hash = hasher.fixed_result();
             let hash_big_endian = hash.into_iter().rev().collect::<Vec<_>>();
             let hash_bits = [

@@ -91,7 +91,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     );
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
-    c.bench_function("root protocol", |b| {
+    c.bench_function("root protocol", move |b| {
         b.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"root"));
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);

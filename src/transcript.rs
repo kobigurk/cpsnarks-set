@@ -1,5 +1,5 @@
 //! Transcripts transform the interactive protocols into non-interactive using
-//! the Merlin transcript
+//! the Merlin transcript.
 //!
 //! Each protocol defines a transcript that defines a domain separator, how to
 //! consume each message in the protocol and how to generate challenge scalars.

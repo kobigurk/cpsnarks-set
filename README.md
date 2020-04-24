@@ -52,6 +52,8 @@ The library contains a number of benchmarks:
 * [nonmembership\_bp](benches/nonmembership_bp.rs) - benchmarks RSA-based set non-membership when the elements are prime with a Bulletproofs range proof.
 * [nonmembership\_hash](benches/nonmembership_hash.rs) - benchmarks RSA-based set non-membership when the elements are not prime and a Blake2s-based hash-to-prime is performed.
 
+To run benchmarks for the protocols with SNARKs use `cargo bench` and for the protocols with Bulletproofs use `cargo bench --no-default-features --features dalek`.
+
 ## Libraries
 
 We've implemented [LegoGroth16](https://github.com/kobigurk/legogro16) on top of [Zexe library](https://github.com/scipr-lab/zexe).
@@ -72,6 +74,7 @@ Unless you explicitly state otherwise, any contribution that you submit to this 
 ## Reference paper
 
 [Zero-Knowledge Proofs for Set Membership: Efficient, Succinct, Modular](https://eprint.iacr.org/2019/1255.pdf)
+
 [Daniel Benarroch](https://github.com/daniben31), [Matteo Campanelli](https://www.github.com/matteocam), [Dario Fiore](https://github.com/dariofiore), [Kobi Gurkan](https://github.com/kobigurk), [Dimitris Kolonelos](https://software.imdea.org/people/dimitris.kolonelos/index.html).
 
 

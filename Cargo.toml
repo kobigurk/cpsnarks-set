@@ -18,8 +18,8 @@ crypto-primitives = { git = "https://github.com/scipr-lab/zexe", features = ["r1
 legogro16 = { git = "ssh://git@github.com/kobigurk/legogro16.git" }
 curve25519-dalek = { version = "2", optional = true, features = ["serde", "simd_backend"] }
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
-digest = "0.7.6"
-blake2 = "0.7.1"
+digest = "0.8.1"
+blake2 = ">= 0.8.1"
 
 [features]
 dalek = ["curve25519-dalek", "bulletproofs"]
@@ -27,7 +27,7 @@ zexe = []
 default = ["zexe"]
 
 [dev-dependencies]
-criterion = "0.3"
+criterion = "0.2"
 
 [lib]
 bench = false
