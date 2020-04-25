@@ -81,7 +81,7 @@ impl<
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.modeq_domain_sep();
         transcript.append_integer_point(b"alpha1", &message.alpha1);
-        transcript.append_curve_point(b"alpha2", &message.alpha2);
+        transcript.append_curve_point(b"alpha2", &message.alpha2)?;
         self.message1 = Some(message.clone());
         Ok(())
     }
@@ -138,7 +138,7 @@ impl<
         let mut transcript = self.transcript.try_borrow_mut()?;
         transcript.modeq_domain_sep();
         transcript.append_integer_point(b"alpha1", &self.proof.message1.alpha1);
-        transcript.append_curve_point(b"alpha2", &self.proof.message1.alpha2);
+        transcript.append_curve_point(b"alpha2", &self.proof.message1.alpha2)?;
         Ok(self.proof.message1.clone())
     }
     fn receive_message2(&mut self) -> Result<Message2<P>, ChannelError> {

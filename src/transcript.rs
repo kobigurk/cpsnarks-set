@@ -9,8 +9,9 @@ use crate::{
         modeq::transcript::TranscriptProtocolModEq, root::transcript::TranscriptProtocolRoot,
     },
     utils::{
-        bigint_to_bytes, curve::CurvePointProjective, integer_to_bytes,
-        ConvertibleUnknownOrderGroup,
+        bigint_to_bytes,
+        curve::{CurveError, CurvePointProjective},
+        integer_to_bytes, ConvertibleUnknownOrderGroup,
     },
 };
 use merlin::Transcript;
@@ -43,7 +44,7 @@ pub trait TranscriptProtocolInteger<G: ConvertibleUnknownOrderGroup> {
 
 pub trait TranscriptProtocolCurve<P: CurvePointProjective> {
     fn append_curve_scalar(&mut self, label: &'static [u8], scalar: &P::ScalarField);
-    fn append_curve_point(&mut self, label: &'static [u8], point: &P);
+    fn append_curve_point(&mut self, label: &'static [u8], point: &P) -> Result<(), CurveError>;
 }
 
 impl<G: ConvertibleUnknownOrderGroup> TranscriptProtocolInteger<G> for Transcript {
@@ -61,9 +62,10 @@ impl<P: CurvePointProjective> TranscriptProtocolCurve<P> for Transcript {
         self.append_message(label, &bigint_to_bytes::<P>(&scalar));
     }
 
-    fn append_curve_point(&mut self, label: &'static [u8], point: &P) {
-        let bytes = point.to_affine_bytes();
+    fn append_curve_point(&mut self, label: &'static [u8], point: &P) -> Result<(), CurveError> {
+        let bytes = point.to_affine_bytes()?;
         self.append_message(label, &bytes);
+        Ok(())
     }
 }
 
