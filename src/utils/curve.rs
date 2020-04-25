@@ -3,6 +3,13 @@
 use rand::{CryptoRng, RngCore};
 use rug::Integer;
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum CurveError {
+        CannotWrite {}
+    }
+}
+
 pub trait Field
 where
     Self: Clone + Sized,
@@ -28,17 +35,26 @@ where
     fn mul(&self, s: &Self::ScalarField) -> Self;
     fn add(&self, other: &Self) -> Self;
 
-    fn to_affine_bytes(&self) -> Vec<u8>;
+    fn to_affine_bytes(&self) -> Result<Vec<u8>, CurveError>;
     fn rand<R: RngCore + CryptoRng>(rng: &mut R) -> Self;
 }
 
 #[cfg(feature = "zexe")]
 mod zexe {
     use super::{CurvePointProjective, Field};
-    use crate::utils::{bits_big_endian_to_bytes_big_endian, bytes_to_integer};
-    use algebra_core::{BigInteger, FpParameters, PrimeField, ProjectiveCurve, ToBytes};
+    use crate::utils::{bits_big_endian_to_bytes_big_endian, bytes_to_integer, curve::CurveError};
+    use algebra_core::{
+        BigInteger, CanonicalSerialize, FpParameters, PrimeField, ProjectiveCurve,
+        SerializationError,
+    };
     use rand::{CryptoRng, RngCore};
     use rug::Integer;
+
+    impl From<SerializationError> for CurveError {
+        fn from(_: SerializationError) -> Self {
+            CurveError::CannotWrite
+        }
+    }
 
     impl<F: PrimeField> Field for F {
         fn modulus() -> Integer {
@@ -87,12 +103,11 @@ mod zexe {
             P::add(*self, *other)
         }
 
-        fn to_affine_bytes(&self) -> Vec<u8> {
-            //TODO(kobi): make this safer and just better serialization
+        fn to_affine_bytes(&self) -> Result<Vec<u8>, CurveError> {
             let affine = self.into_affine();
             let mut bytes = vec![];
-            affine.write(&mut bytes).unwrap();
-            bytes
+            affine.serialize(&mut bytes)?;
+            Ok(bytes)
         }
 
         fn rand<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
@@ -105,7 +120,8 @@ mod zexe {
 mod dalek {
     use super::{CurvePointProjective, Field};
     use crate::utils::{
-        bigint_to_integer, bits_big_endian_to_bytes_big_endian, bytes_big_endian_to_bits_big_endian,
+        bigint_to_integer, bits_big_endian_to_bytes_big_endian,
+        bytes_big_endian_to_bits_big_endian, curve::CurveError,
     };
     use curve25519_dalek::{constants::BASEPOINT_ORDER, ristretto::RistrettoPoint, scalar::Scalar};
     use rand::{CryptoRng, RngCore};
@@ -183,8 +199,8 @@ mod dalek {
             self + other
         }
 
-        fn to_affine_bytes(&self) -> Vec<u8> {
-            self.compress().to_bytes()[..].to_vec()
+        fn to_affine_bytes(&self) -> Result<Vec<u8>, CurveError> {
+            Ok(self.compress().to_bytes()[..].to_vec())
         }
         fn rand<R: RngCore + CryptoRng>(rng: &mut R) -> Self {
             RistrettoPoint::random(rng)

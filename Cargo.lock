@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "algebra"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
 ]
@@ -24,7 +24,7 @@ dependencies = [
 [[package]]
 name = "algebra-core"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "derivative 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -79,7 +79,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "bench-utils"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 
 [[package]]
 name = "bitflags"
@@ -345,7 +345,7 @@ dependencies = [
 [[package]]
 name = "crypto-primitives"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "bench-utils 0.1.0 (git+https://github.com/scipr-lab/zexe)",
@@ -450,7 +450,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "ff-fft"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -523,7 +523,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "legogro16"
 version = "0.1.0"
-source = "git+ssh://git@github.com/kobigurk/legogro16.git#066ede3757f9b4dc0d2abf28adba4b5b20ad730c"
+source = "git+ssh://git@github.com/kobigurk/legogro16.git#ece34fc392ed486170b99fe80a77a049e2491c73"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "bench-utils 0.1.0 (git+https://github.com/scipr-lab/zexe)",
@@ -648,7 +648,7 @@ dependencies = [
 [[package]]
 name = "r1cs-core"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -657,7 +657,7 @@ dependencies = [
 [[package]]
 name = "r1cs-std"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#9d267f65733b9684ad6da9af31b945515f1a9474"
+source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
 dependencies = [
  "algebra 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "derivative 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
