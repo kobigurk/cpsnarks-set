@@ -97,7 +97,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
     c.bench_function("membership_prime protocol proving", |b| {
-            b.iter(|| {
+        b.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"membership"));
             let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
             let statement = Statement {
@@ -121,9 +121,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("membership_prime protocol verification", |b| {
-            b.iter(|| {
+        b.iter(|| {
             let verification_transcript = RefCell::new(Transcript::new(b"membership"));
-            let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+            let mut prover_channel =
+                TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
 
             let statement = Statement {
                 c_e_q: commitment,

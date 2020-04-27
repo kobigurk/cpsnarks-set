@@ -133,11 +133,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let verification_transcript = RefCell::new(Transcript::new(b"nonmembership"));
             crs.crs_hash_to_prime.hash_to_prime_parameters.transcript =
                 Some(verification_transcript.clone());
-            let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+            let mut prover_channel =
+                TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
             protocol.verify(&mut prover_channel, &statement).unwrap();
         })
     });
-
 }
 
 criterion_group!(benches, criterion_benchmark);

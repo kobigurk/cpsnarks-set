@@ -141,11 +141,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("nonmembership_hash protocol verification", |be| {
         be.iter(|| {
             let verification_transcript = RefCell::new(Transcript::new(b"nonmembership"));
-            let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+            let mut prover_channel =
+                TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
             protocol.verify(&mut prover_channel, &statement).unwrap();
         })
     });
-
 }
 
 criterion_group!(benches, criterion_benchmark);

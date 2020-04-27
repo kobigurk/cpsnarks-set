@@ -130,11 +130,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .unwrap();
         })
     });
-    
+
     c.bench_function("membership_hash protocol verification", |b| {
         b.iter(|| {
             let verification_transcript = RefCell::new(Transcript::new(b"membership"));
-            let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+            let mut prover_channel =
+                TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
             protocol.verify(&mut prover_channel, &statement).unwrap();
         })
     });
