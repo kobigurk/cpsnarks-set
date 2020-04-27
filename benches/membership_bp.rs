@@ -95,7 +95,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
-    c.bench_function("membership_bp protocol", move |b| {
+    c.bench_function("membership_bp protocol proving", |b| {
         b.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"membership"));
             crs.crs_hash_to_prime.hash_to_prime_parameters.transcript =
@@ -120,6 +120,16 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 .unwrap();
         })
     });
+    c.bench_function("membership_bp protocol verification", |b| {
+        b.iter(|| {
+            let verification_transcript = RefCell::new(Transcript::new(b"membership"));
+            crs.crs_hash_to_prime.hash_to_prime_parameters.transcript =
+                Some(verification_transcript.clone());
+            let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+            protocol.verify(&mut prover_channel, &statement).unwrap();
+        })
+    });
+
 }
 
 criterion_group!(benches, criterion_benchmark);

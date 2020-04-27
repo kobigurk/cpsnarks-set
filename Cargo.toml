@@ -24,10 +24,11 @@ blake2 = ">= 0.8.1"
 [features]
 dalek = ["curve25519-dalek", "bulletproofs"]
 zexe = []
+class = []
 default = ["zexe"]
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.3"
 
 [lib]
 bench = false
@@ -65,7 +66,7 @@ required-features = ["zexe"]
 [[bench]]
 name = "membership_class"
 harness = false
-required-features = ["zexe"]
+required-features = ["zexe", "class"]
 
 [[bench]]
 name = "membership_bp"
