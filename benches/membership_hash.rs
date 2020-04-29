@@ -52,6 +52,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         G1Projective,
         HPProtocol<Bls12_381, TestHashToPrimeParameters>,
     >::from_crs(&crs);
+    println!("crs size: {}", protocol.crs_size());
 
     let value = Integer::from(Integer::u_pow_u(
         2,

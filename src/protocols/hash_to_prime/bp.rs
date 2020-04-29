@@ -204,6 +204,10 @@ impl HashToPrimeProtocol<RistrettoPoint> for Protocol {
     fn hash_to_prime(&self, e: &Integer) -> Result<(Integer, u64), HashToPrimeError> {
         Ok((e.clone(), 0))
     }
+
+    fn crs_size(&self) -> (usize, usize) {
+        (0, 0)
+    }
 }
 
 #[cfg(test)]

@@ -12,7 +12,7 @@ use crate::{
     },
     utils::integer_to_bigint_mod_q,
 };
-use algebra_core::{AffineCurve, PairingEngine, PrimeField, UniformRand};
+use algebra_core::{AffineCurve, PairingEngine, PrimeField, ProjectiveCurve, UniformRand};
 use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
 use r1cs_std::{
     alloc::AllocGadget, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpGadget,
@@ -83,7 +83,10 @@ impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
         ];
         Ok(legogro16::generate_random_parameters(
             c,
-            &pedersen_bases,
+            &pedersen_bases
+                .into_iter()
+                .map(|p| p.into_affine())
+                .collect::<Vec<_>>(),
             rng,
         )?)
     }
@@ -127,7 +130,7 @@ impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
         let proof_link_d_without_one = proof
             .link_d
             .into_projective()
-            .sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0]);
+            .sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0].into_projective());
         if statement.c_e_q != proof_link_d_without_one {
             return Err(VerificationError::VerificationFailed);
         }

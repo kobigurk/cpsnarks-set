@@ -15,7 +15,9 @@ use crate::{
         bytes_big_endian_to_bits_big_endian, integer_to_bigint_mod_q, log2,
     },
 };
-use algebra_core::{AffineCurve, BigInteger, One, PairingEngine, PrimeField, UniformRand};
+use algebra_core::{
+    AffineCurve, BigInteger, One, PairingEngine, PrimeField, ProjectiveCurve, UniformRand,
+};
 use blake2::Blake2s;
 use crypto_primitives::prf::blake2s::constraints::blake2s_gadget;
 use digest::{Digest, FixedOutput};
@@ -177,7 +179,10 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         ];
         Ok(legogro16::generate_random_parameters(
             c,
-            &pedersen_bases,
+            &pedersen_bases
+                .into_iter()
+                .map(|p| p.into_affine())
+                .collect::<Vec<_>>(),
             rng,
         )?)
     }
@@ -225,7 +230,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         let proof_link_d_without_one = proof
             .link_d
             .into_projective()
-            .sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0]);
+            .sub(&self.crs.hash_to_prime_parameters.vk.link_bases[0].into_projective());
         if statement.c_e_q != proof_link_d_without_one {
             return Err(VerificationError::VerificationFailed);
         }
