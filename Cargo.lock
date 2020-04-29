@@ -218,6 +218,7 @@ dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "blake2 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "bulletproofs 2.0.0 (git+https://github.com/dalek-cryptography/bulletproofs?branch=develop)",
+ "cfg-if 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "criterion 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "crypto-primitives 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "curve25519-dalek 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -480,7 +481,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "legogro16"
 version = "0.1.0"
-source = "git+ssh://git@github.com/kobigurk/legogro16.git#ece34fc392ed486170b99fe80a77a049e2491c73"
+source = "git+ssh://git@github.com/kobigurk/legogro16.git#e197889afb0853fd71a19d84cad6d8ef8c7e1117"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "bench-utils 0.1.0 (git+https://github.com/scipr-lab/zexe)",

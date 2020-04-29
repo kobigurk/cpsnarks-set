@@ -20,6 +20,7 @@ curve25519-dalek = { version = "2", optional = true, features = ["serde", "simd_
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.8.1"
 blake2 = ">= 0.8.1"
+cfg-if = "0.1"
 
 [features]
 dalek = ["curve25519-dalek", "bulletproofs"]

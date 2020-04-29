@@ -6,7 +6,7 @@ use crate::{
     protocols::{
         hash_to_prime::{
             channel::{HashToPrimeProverChannel, HashToPrimeVerifierChannel},
-            CRSHashToPrime, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
+            CRSHashToPrime, CRSSize, HashToPrimeError, HashToPrimeProtocol, Statement, Witness,
         },
         ProofError, SetupError, VerificationError,
     },
@@ -16,7 +16,7 @@ use bulletproofs::{
     r1cs::{ConstraintSystem, LinearCombination, Prover, R1CSError, R1CSProof, Verifier},
     BulletproofGens, PedersenGens,
 };
-use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar};
+use curve25519_dalek::{ristretto::RistrettoPoint, scalar::Scalar, traits::Identity};
 use merlin::Transcript;
 use rand::Rng;
 use rug::Integer;
@@ -75,6 +75,17 @@ pub struct BPParameters {
 impl<'a> BPParameters {
     pub fn set_transcript(&mut self, transcript: &RefCell<Transcript>) {
         self.transcript = Some(transcript.clone());
+    }
+}
+
+impl CRSSize for BPParameters {
+    fn crs_size(&self) -> (usize, usize) {
+        let mut vk_accum = 0;
+        let ristretto_point_size = RistrettoPoint::identity().compress().as_bytes().len();
+        for _ in 0..self.bulletproof_gens.gens_capacity {
+            vk_accum += ristretto_point_size;
+        }
+        (vk_accum, 0)
     }
 }
 
