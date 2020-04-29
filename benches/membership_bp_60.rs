@@ -4,7 +4,7 @@ use cpsnarks_set::{
     commitments::Commitment,
     parameters::Parameters,
     protocols::{
-        hash_to_prime::bp::Protocol as HPProtocol,
+        hash_to_prime::{bp::Protocol as HPProtocol, CRSSize},
         membership::{
             transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
             Protocol, Statement, Witness,
@@ -41,6 +41,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     >::setup(&params, &mut rng1, &mut rng2)
     .unwrap()
     .crs;
+    println!(
+        "crs size: {:?}",
+        crs.crs_hash_to_prime.hash_to_prime_parameters.crs_size()
+    );
     let protocol = Protocol::<Rsa2048, RistrettoPoint, HPProtocol>::from_crs(&crs);
 
     let value = Integer::from(Integer::u_pow_u(
@@ -91,6 +95,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         )
         .unwrap();
     let proof = verifier_channel.proof().unwrap();
+    println!(
+        "proof size: {}",
+        proof.proof_hash_to_prime.serialized_size()
+    );
     let verification_transcript = RefCell::new(Transcript::new(b"membership"));
     crs.crs_hash_to_prime.hash_to_prime_parameters.transcript =
         Some(verification_transcript.clone());

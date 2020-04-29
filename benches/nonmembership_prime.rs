@@ -8,7 +8,7 @@ use cpsnarks_set::{
     commitments::Commitment,
     parameters::Parameters,
     protocols::{
-        hash_to_prime::snark_range::Protocol as HPProtocol,
+        hash_to_prime::{snark_range::Protocol as HPProtocol, CRSSize},
         nonmembership::{
             transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
             Protocol, Statement, Witness,
@@ -42,6 +42,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     >::setup(&params, &mut rng1, &mut rng2)
     .unwrap()
     .crs;
+    println!(
+        "crs size: {:?}",
+        crs.crs_hash_to_prime.hash_to_prime_parameters.crs_size()
+    );
     let protocol = Protocol::<Rsa2048, G1Projective, HPProtocol<Bls12_381>>::from_crs(&crs);
 
     let value = Integer::from(Integer::u_pow_u(

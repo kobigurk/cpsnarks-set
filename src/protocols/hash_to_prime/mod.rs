@@ -50,7 +50,6 @@ cfg_if::cfg_if! {
                 pk_accum += self.beta_g1.serialized_size();
                 pk_accum += self.delta_g1.serialized_size();
                 pk_accum += self.eta_delta_inv_g1.serialized_size();
-                pk_accum += self.eta_delta_inv_g1.serialized_size();
                 for g in &self.a_query {
                     pk_accum += g.serialized_size();
                 }
