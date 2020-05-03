@@ -59,10 +59,11 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         G1Projective,
         HPProtocol<Bls12_381, TestHashToPrimeParameters>,
     >::from_crs(&crs);
+    drop(crs);
 
     let value = Integer::from(Integer::u_pow_u(
         2,
-        (crs.parameters.hash_to_prime_bits) as u32,
+        (protocol.crs.parameters.hash_to_prime_bits) as u32,
     ))
     .random_below(&mut rng1);
     let (hashed_value, _) = protocol.hash_to_prime(&value).unwrap();
@@ -91,7 +92,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     assert_eq!(Rsa2048::exp(&w, &hashed_value), acc);
 
     let proof_transcript = RefCell::new(Transcript::new(b"membership"));
-    let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
+    let mut verifier_channel = TranscriptVerifierChannel::new(&protocol.crs, &proof_transcript);
     let statement = Statement {
         c_e_q: commitment,
         c_p: acc.clone(),
@@ -111,13 +112,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         .unwrap();
     let proof = verifier_channel.proof().unwrap();
     let verification_transcript = RefCell::new(Transcript::new(b"membership"));
-    let mut prover_channel = TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+    let mut prover_channel =
+        TranscriptProverChannel::new(&protocol.crs, &verification_transcript, &proof);
     protocol.verify(&mut prover_channel, &statement).unwrap();
 
     c.bench_function("membership_hash protocol proving", |b| {
         b.iter(|| {
             let proof_transcript = RefCell::new(Transcript::new(b"membership"));
-            let mut verifier_channel = TranscriptVerifierChannel::new(&crs, &proof_transcript);
+            let mut verifier_channel =
+                TranscriptVerifierChannel::new(&protocol.crs, &proof_transcript);
             let statement = Statement {
                 c_e_q: commitment,
                 c_p: acc.clone(),
@@ -142,7 +145,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| {
             let verification_transcript = RefCell::new(Transcript::new(b"membership"));
             let mut prover_channel =
-                TranscriptProverChannel::new(&crs, &verification_transcript, &proof);
+                TranscriptProverChannel::new(&protocol.crs, &verification_transcript, &proof);
             protocol.verify(&mut prover_channel, &statement).unwrap();
         })
     });

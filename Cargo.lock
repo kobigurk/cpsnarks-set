@@ -24,7 +24,7 @@ dependencies = [
 [[package]]
 name = "algebra-core"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
+source = "git+https://github.com/scipr-lab/zexe#11c02ed2d90bd9ceb67b197029acb7bdde54cc13"
 dependencies = [
  "derivative 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -69,7 +69,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "bench-utils"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
+source = "git+https://github.com/scipr-lab/zexe#11c02ed2d90bd9ceb67b197029acb7bdde54cc13"
 
 [[package]]
 name = "bitflags"
@@ -405,7 +405,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "ff-fft"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
+source = "git+https://github.com/scipr-lab/zexe#11c02ed2d90bd9ceb67b197029acb7bdde54cc13"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "rand 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -481,7 +481,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "legogro16"
 version = "0.1.0"
-source = "git+ssh://git@github.com/kobigurk/legogro16.git#e197889afb0853fd71a19d84cad6d8ef8c7e1117"
+source = "git+ssh://git@github.com/kobigurk/legogro16.git#527c3e41c09e790c856b9c210d99c8ef53f1c737"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "bench-utils 0.1.0 (git+https://github.com/scipr-lab/zexe)",
@@ -630,7 +630,7 @@ dependencies = [
 [[package]]
 name = "r1cs-core"
 version = "0.1.0"
-source = "git+https://github.com/scipr-lab/zexe#4274843a70527082d80398d46effcf2b92b2616a"
+source = "git+https://github.com/scipr-lab/zexe#11c02ed2d90bd9ceb67b197029acb7bdde54cc13"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
