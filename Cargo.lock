@@ -3,7 +3,7 @@
 [[package]]
 name = "accumulator"
 version = "0.2.1"
-source = "git+ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git#11b6eedbec77eff9b58c3fdb181c5c81b110fe50"
+source = "git+https://github.com/kobigurk/cpsnarks-set-accumulator#11b6eedbec77eff9b58c3fdb181c5c81b110fe50"
 dependencies = [
  "arrayref 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "blake2-rfc 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -215,7 +215,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "cpsnarks-set"
 version = "0.1.0"
 dependencies = [
- "accumulator 0.2.1 (git+ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git)",
+ "accumulator 0.2.1 (git+https://github.com/kobigurk/cpsnarks-set-accumulator)",
  "algebra 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "blake2 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -225,7 +225,7 @@ dependencies = [
  "crypto-primitives 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "curve25519-dalek 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "digest 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "legogro16 0.1.0 (git+ssh://git@github.com/kobigurk/legogro16.git)",
+ "legogro16 0.1.0 (git+https://github.com/kobigurk/legogro16)",
  "merlin 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "quick-error 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "r1cs-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
@@ -491,7 +491,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "legogro16"
 version = "0.1.0"
-source = "git+ssh://git@github.com/kobigurk/legogro16.git#7fb4de5f71b76eb7585b54d6d3c98aa220857e12"
+source = "git+https://github.com/kobigurk/legogro16#7fb4de5f71b76eb7585b54d6d3c98aa220857e12"
 dependencies = [
  "algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)",
  "bench-utils 0.1.0 (git+https://github.com/scipr-lab/zexe)",
@@ -1090,7 +1090,7 @@ dependencies = [
 ]
 
 [metadata]
-"checksum accumulator 0.2.1 (git+ssh://git@github.com/kobigurk/cpsnarks-set-accumulator.git)" = "<none>"
+"checksum accumulator 0.2.1 (git+https://github.com/kobigurk/cpsnarks-set-accumulator)" = "<none>"
 "checksum algebra 0.1.0 (git+https://github.com/scipr-lab/zexe)" = "<none>"
 "checksum algebra-core 0.1.0 (git+https://github.com/scipr-lab/zexe)" = "<none>"
 "checksum arrayref 0.3.6 (registry+https://github.com/rust-lang/crates.io-index)" = "a4c527152e37cf757a3f78aae5a06fbeefdb07ccc535c980a3208ee3060dd544"
@@ -1142,7 +1142,7 @@ dependencies = [
 "checksum js-sys 0.3.37 (registry+https://github.com/rust-lang/crates.io-index)" = "6a27d435371a2fa5b6d2b028a74bbdb1234f308da363226a2854ca3ff8ba7055"
 "checksum keccak 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-"checksum legogro16 0.1.0 (git+ssh://git@github.com/kobigurk/legogro16.git)" = "<none>"
+"checksum legogro16 0.1.0 (git+https://github.com/kobigurk/legogro16)" = "<none>"
 "checksum libc 0.2.67 (registry+https://github.com/rust-lang/crates.io-index)" = "eb147597cdf94ed43ab7a9038716637d2d1bf2bc571da995d0028dec06bd3018"
 "checksum log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)" = "14b6052be84e6b71ab17edffc2eeabf5c2c3ae1fdb464aae35ac50c67a44e1f7"
 "checksum maybe-uninit 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
