@@ -39,14 +39,14 @@ where
     fn rand<R: RngCore + CryptoRng>(rng: &mut R) -> Self;
 }
 
-#[cfg(feature = "zexe")]
-mod zexe {
+#[cfg(feature = "arkworks")]
+mod arkworks {
     use super::{CurvePointProjective, Field};
     use crate::utils::{bits_big_endian_to_bytes_big_endian, bytes_to_integer, curve::CurveError};
-    use algebra_core::{
-        BigInteger, CanonicalSerialize, FpParameters, PrimeField, ProjectiveCurve,
-        SerializationError,
-    };
+    use ark_ec::ProjectiveCurve;
+    use ark_ff::{BigInteger, FpParameters, PrimeField};
+    use ark_serialize::{CanonicalSerialize, SerializationError};
+
     use rand::{CryptoRng, RngCore};
     use rug::Integer;
 
@@ -59,7 +59,7 @@ mod zexe {
     impl<F: PrimeField> Field for F {
         fn modulus() -> Integer {
             let repr = F::Params::MODULUS;
-            let bits = repr.to_bits();
+            let bits = repr.to_bits_be();
             let bytes = bits_big_endian_to_bytes_big_endian(&bits);
             bytes_to_integer(&bytes)
         }
@@ -67,10 +67,10 @@ mod zexe {
             F::size_in_bits()
         }
         fn to_bits(&self) -> Vec<bool> {
-            self.into_repr().to_bits()
+            self.into_repr().to_bits_be()
         }
         fn from_bits(bits: &[bool]) -> Self {
-            F::from(F::BigInt::from_bits(bits))
+            F::from(F::BigInt::from_bits_be(bits))
         }
         fn add(&self, other: &Self) -> Self {
             F::add(*self, *other)
@@ -96,7 +96,7 @@ mod zexe {
         type ScalarField = P::ScalarField;
 
         fn mul(&self, s: &Self::ScalarField) -> Self {
-            P::mul(*self, *s)
+            P::mul(*self, s.into_repr())
         }
 
         fn add(&self, other: &Self) -> Self {

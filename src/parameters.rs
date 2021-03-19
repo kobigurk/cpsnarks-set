@@ -126,11 +126,10 @@ mod test {
         params.is_valid().unwrap();
     }
 
-    #[cfg(all(test, feature = "zexe"))]
+    #[cfg(all(test, feature = "arkworks"))]
     #[test]
     fn test_valid_for_some_fields() {
-        let params_with_security_level =
-            Parameters::from_curve::<algebra::bls12_381::Fr>().unwrap();
+        let params_with_security_level = Parameters::from_curve::<ark_bls12_381::Fr>().unwrap();
         println!(
             "security level: {}, params: {:#?}",
             params_with_security_level.1, params_with_security_level.0

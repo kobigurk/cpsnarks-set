@@ -13,14 +13,18 @@ pub mod channel;
 pub mod transcript;
 
 cfg_if::cfg_if! {
-    if #[cfg(feature = "zexe")] {
+    if #[cfg(feature = "arkworks")] {
         pub mod snark_hash;
         pub mod snark_range;
 
-        use algebra_core::{PairingEngine, ConstantSerializedSize, CanonicalSerialize};
+        use ark_ec::{PairingEngine, AffineCurve};
+        use ark_serialize::CanonicalSerialize;
 
-        impl<E: PairingEngine> CRSSize for legogro16::Parameters::<E> {
+        impl<E: PairingEngine> CRSSize for legogro16::ProvingKey::<E> {
             fn crs_size(&self) -> (usize, usize) {
+                let g1_serialized_size = E::G1Affine::prime_subgroup_generator().serialized_size();
+                let g2_serialized_size = E::G2Affine::prime_subgroup_generator().serialized_size();
+
                 let mut vk_accum = 0;
                 // Groth16 vk
                 vk_accum += self.vk.alpha_g1.serialized_size();
@@ -35,13 +39,13 @@ cfg_if::cfg_if! {
                 // link
                 vk_accum += 8; // l
                 vk_accum += 8; // t
-                vk_accum += E::G1Affine::SERIALIZED_SIZE;
-                vk_accum += E::G2Affine::SERIALIZED_SIZE;
+                vk_accum += g1_serialized_size;
+                vk_accum += g2_serialized_size;
 
                 for b in &self.vk.link_bases {
                     vk_accum += b.serialized_size();
                 }
-                vk_accum += E::G2Affine::SERIALIZED_SIZE;
+                vk_accum += g2_serialized_size;
                 for b in &self.vk.link_vk.c {
                     vk_accum += b.serialized_size();
                 }

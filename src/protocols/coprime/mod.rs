@@ -288,7 +288,7 @@ impl<G: ConvertibleUnknownOrderGroup> Protocol<G> {
     }
 }
 
-#[cfg(all(test, feature = "zexe"))]
+#[cfg(all(test, feature = "arkworks"))]
 mod test {
     use super::{Protocol, Statement, Witness};
     use crate::{
@@ -303,7 +303,7 @@ mod test {
         group::{Group, Rsa2048},
         AccumulatorWithoutHashToPrime,
     };
-    use algebra::bls12_381::{Bls12_381, G1Projective};
+    use ark_bls12_381::{Bls12_381, G1Projective};
     use merlin::Transcript;
     use rand::thread_rng;
     use rug::rand::RandState;

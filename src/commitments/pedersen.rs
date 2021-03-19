@@ -57,11 +57,11 @@ impl<P: CurvePointProjective> Commitment for PedersenCommitment<P> {
     }
 }
 
-#[cfg(all(test, feature = "zexe"))]
+#[cfg(all(test, feature = "arkworks"))]
 mod test {
     use super::PedersenCommitment;
     use crate::commitments::Commitment;
-    use algebra::bls12_381::G1Projective;
+    use ark_bls12_381::G1Projective;
     use rand::thread_rng;
     use rug::Integer;
 

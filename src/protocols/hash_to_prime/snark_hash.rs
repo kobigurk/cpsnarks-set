@@ -15,16 +15,19 @@ use crate::{
         bytes_big_endian_to_bits_big_endian, integer_to_bigint_mod_q, log2,
     },
 };
-use algebra_core::{
-    AffineCurve, BigInteger, One, PairingEngine, PrimeField, ProjectiveCurve, UniformRand,
+use ark_ff::{
+    BigInteger, One, PrimeField, UniformRand,
 };
-use blake2::Blake2s;
-use crypto_primitives::prf::blake2s::constraints::blake2s_gadget;
-use digest::{Digest, FixedOutput};
-use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use r1cs_std::{
-    alloc::AllocGadget, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpGadget,
-    Assignment,
+use ark_ec::{
+    AffineCurve, PairingEngine, ProjectiveCurve,
+};
+
+use blake2::{Blake2s, Digest};
+use ark_crypto_primitives::{prf::blake2s::constraints::evaluate_blake2s};
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use ark_r1cs_std::{
+    alloc::{AllocationMode, AllocVar}, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpVar,
+    Assignment, R1CSVar,
 };
 use rand::Rng;
 use rug::{integer::IsPrime, Integer};
@@ -49,19 +52,19 @@ pub struct HashToPrimeHashCircuit<E: PairingEngine, P: HashToPrimeHashParameters
 impl<E: PairingEngine, P: HashToPrimeHashParameters> ConstraintSynthesizer<E::Fr>
     for HashToPrimeHashCircuit<E, P>
 {
-    fn generate_constraints<CS: ConstraintSystem<E::Fr>>(
+    fn generate_constraints(
         self,
-        cs: &mut CS,
+        cs: ConstraintSystemRef<E::Fr>,
     ) -> Result<(), SynthesisError> {
-        let f = FpGadget::alloc(cs.ns(|| "alloc value"), || self.value.get())?;
+        let f = FpVar::new_variable(ark_relations::ns!(cs, "alloc value"), || self.value.get(), AllocationMode::Witness)?;
         let mut index_bits = vec![];
         let index_bit_length = P::index_bit_length(self.security_level);
         if index_bit_length > 64 {
             return Err(SynthesisError::Unsatisfiable);
         }
         for i in 0..index_bit_length {
-            index_bits.push(Boolean::alloc(
-                cs.ns(|| format!("index bit {}", i)),
+            index_bits.push(Boolean::new_variable(
+                ark_relations::ns!(cs, "alloc bit"),
                 || {
                     if self.index.is_none() {
                         Err(SynthesisError::AssignmentMissing)
@@ -70,11 +73,12 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> ConstraintSynthesizer<E::Fr
                         Ok((mask & self.index.unwrap()) == mask)
                     }
                 },
+                AllocationMode::Witness,
             )?);
         }
         // big-endian bits
-        let bits = f.to_bits(cs.ns(|| "to bits"))?;
-        let bits_to_hash: Vec<Boolean> = [
+        let bits = f.to_bits_be()?;
+        let bits_to_hash: Vec<Boolean<E::Fr>> = [
             index_bits.as_slice(),
             &bits[<E::Fr as PrimeField>::size_in_bits() - P::MESSAGE_SIZE as usize..],
         ]
@@ -90,51 +94,48 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> ConstraintSynthesizer<E::Fr
             bits_to_hash
         };
 
-        let hash_result = blake2s_gadget(cs.ns(|| "blake2s hash"), &bits_to_hash_padded)?;
+        let hash_result = evaluate_blake2s(&bits_to_hash_padded)?;
         let hash_bits = hash_result
             .into_iter()
             .map(|n| n.to_bits_le())
             .flatten()
-            .collect::<Vec<Boolean>>();
+            .collect::<Vec<Boolean<E::Fr>>>();
 
         let hash_bits = hash_bits
             .into_iter()
             .take((self.required_bit_size - 1) as usize)
             .collect::<Vec<_>>();
         let hash_bits = [&[Boolean::constant(true)][..], &hash_bits].concat();
-        let result = FpGadget::alloc_input(cs.ns(|| "prime"), || {
-            if hash_bits.iter().any(|x| x.get_value().is_none()) {
+        let result = FpVar::new_variable(ark_relations::ns!(cs, "prime"), || {
+            if hash_bits.iter().any(|x| x.value().is_err()) {
                 Err(SynthesisError::AssignmentMissing)
             } else {
-                Ok(E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(
+                Ok(E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits_be(
                     &hash_bits
                         .iter()
-                        .map(|x| x.get_value().unwrap())
+                        .map(|x| x.value().unwrap())
                         .collect::<Vec<_>>(),
-                )))
+                )).unwrap())
             }
-        })?;
-        let result_bits = result.to_bits(cs.ns(|| "hash number to bits"))?;
-        for (i, b) in result_bits
+        }, AllocationMode::Input)?;
+        let result_bits = result.to_bits_be()?;
+        for b in result_bits
             .iter()
             .take(<E::Fr as PrimeField>::size_in_bits() - self.required_bit_size as usize)
-            .enumerate()
         {
             b.enforce_equal(
-                cs.ns(|| format!("enforce result header is zero, bit {}", i)),
                 &Boolean::constant(false),
             )?;
         }
-        for (i, (h, r)) in hash_bits
+        for (h, r) in hash_bits
             .iter()
             .zip(
                 result_bits
                     .iter()
                     .skip(<E::Fr as PrimeField>::size_in_bits() - self.required_bit_size as usize),
             )
-            .enumerate()
         {
-            h.enforce_equal(cs.ns(|| format!("enforce result bit {}", i)), &r)?;
+            h.enforce_equal(&r)?;
         }
 
         Ok(())
@@ -150,7 +151,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
     for Protocol<E, P>
 {
     type Proof = legogro16::Proof<E>;
-    type Parameters = legogro16::Parameters<E>;
+    type Parameters = legogro16::ProvingKey<E>;
 
     fn from_crs(crs: &CRSHashToPrime<E::G1Projective, Self>) -> Protocol<E, P> {
         Protocol {
@@ -243,7 +244,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
         let value = integer_to_bigint_mod_q::<E::G1Projective>(e)?;
         let bigint_bits = 64 * ((E::Fr::one().neg().into_repr().num_bits() + 63) / 64);
         let bits_to_skip = bigint_bits as usize - P::MESSAGE_SIZE as usize;
-        let value_raw_bits = value.into_repr().to_bits();
+        let value_raw_bits = value.into_repr().to_bits_be();
         for b in &value_raw_bits[..bits_to_skip] {
             if *b {
                 return Err(HashToPrimeError::ValueTooBig);
@@ -277,8 +278,8 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
                 .rev()
                 .collect::<Vec<_>>();
             let mut hasher = Blake2s::default();
-            hasher.input(&bytes_to_hash);
-            let hash = hasher.fixed_result();
+            hasher.update(&bytes_to_hash);
+            let hash = hasher.finalize();
             let hash_big_endian = hash.into_iter().rev().collect::<Vec<_>>();
             let hash_bits = [
                 vec![true].as_slice(),
@@ -291,7 +292,7 @@ impl<E: PairingEngine, P: HashToPrimeHashParameters> HashToPrimeProtocol<E::G1Pr
             ]
             .concat();
 
-            let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits(&hash_bits));
+            let element = E::Fr::from_repr(<E::Fr as PrimeField>::BigInt::from_bits_be(&hash_bits)).unwrap();
             let integer = bigint_to_integer::<E::G1Projective>(&element);
             // from the gmp documentation: "A composite number will be identified as a prime with an asymptotic probability of less than 4^(-reps)", so we choose reps = security_level/2
             let is_prime = integer.is_probably_prime(self.crs.parameters.security_level as u32 / 2);
@@ -317,13 +318,12 @@ mod test {
             transcript::{TranscriptProverChannel, TranscriptVerifierChannel},
             HashToPrimeProtocol,
         },
-        utils::{bigint_to_integer, integer_to_bigint_mod_q},
+        utils::integer_to_bigint_mod_q,
     };
     use accumulator::group::Rsa2048;
-    use algebra::bls12_381::{Bls12_381, Fr, G1Projective};
+    use ark_bls12_381::{Bls12_381, Fr, G1Projective};
     use merlin::Transcript;
-    use r1cs_core::ConstraintSynthesizer;
-    use r1cs_std::test_constraint_system::TestConstraintSystem;
+    use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
     use rand::thread_rng;
     use rug::rand::RandState;
     use rug::Integer;
@@ -336,7 +336,7 @@ mod test {
 
     #[test]
     fn test_circuit() {
-        let mut cs = TestConstraintSystem::<Fr>::new();
+        let cs = ConstraintSystem::<Fr>::new_ref();
         let params = Parameters::from_security_level(128).unwrap();
         let mut rng1 = RandState::new();
         rng1.seed(&Integer::from(13));
@@ -353,7 +353,7 @@ mod test {
         let protocol = Protocol::<Bls12_381, TestParameters>::from_crs(&crs);
 
         let value = Integer::from(12);
-        let (prime, index) = protocol.hash_to_prime(&value).unwrap();
+        let (_, index) = protocol.hash_to_prime(&value).unwrap();
         let c = HashToPrimeHashCircuit::<Bls12_381, TestParameters> {
             security_level: crs.parameters.security_level,
             required_bit_size: crs.parameters.hash_to_prime_bits,
@@ -361,17 +361,13 @@ mod test {
             index: Some(index),
             parameters_type: std::marker::PhantomData,
         };
-        c.generate_constraints(&mut cs).unwrap();
-        if !cs.is_satisfied() {
+        c.generate_constraints(cs.clone()).unwrap();
+        if !cs.is_satisfied().unwrap() {
             panic!(format!(
-                "not satisfied: {}",
+                "not satisfied: {:?}",
                 cs.which_is_unsatisfied().unwrap()
             ));
         }
-        assert_eq!(
-            prime,
-            bigint_to_integer::<G1Projective>(&cs.get("prime/alloc"))
-        );
     }
 
     #[test]

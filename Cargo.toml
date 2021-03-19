@@ -8,15 +8,17 @@ edition = "2018"
 accumulator = { git = "https://github.com/kobigurk/cpsnarks-set-accumulator" }
 quick-error = "1.2.3"
 rug = "1.7.0"
-algebra-core = { git = "https://github.com/scipr-lab/zexe" }
-algebra = { git = "https://github.com/scipr-lab/zexe", features = ["bls12_381"]}
+ark-bls12-381 = { git = "https://github.com/arkworks-rs/curves" }
 merlin = "2.0.0"
 rand = { version = "0.7" }
-r1cs-core = { git = "https://github.com/scipr-lab/zexe" }
-r1cs-std = { git = "https://github.com/scipr-lab/zexe" }
-crypto-primitives = { git = "https://github.com/scipr-lab/zexe", features = ["r1cs"]}
+ark-ff = { git = "https://github.com/arkworks-rs/algebra" }
+ark-ec = { git = "https://github.com/arkworks-rs/algebra" }
+ark-serialize = { git = "https://github.com/arkworks-rs/algebra" }
+ark-relations = { git = "https://github.com/arkworks-rs/snark" }
+ark-r1cs-std = { git = "https://github.com/arkworks-rs/r1cs-std" }
+ark-crypto-primitives = { git = "https://github.com/arkworks-rs/crypto-primitives", branch = "main", features = [ "r1cs" ] }
 legogro16 = { git = "https://github.com/kobigurk/legogro16" }
-curve25519-dalek = { version = "2", optional = true, features = ["serde", "simd_backend"] }
+curve25519-dalek = { version = "3", optional = true, features = ["serde", "simd_backend"] }
 bulletproofs = { git = "https://github.com/dalek-cryptography/bulletproofs", branch = "develop", optional = true, features = ["yoloproofs"] }
 digest = "0.8.1"
 blake2 = ">= 0.8.1"
@@ -24,9 +26,9 @@ cfg-if = "0.1"
 
 [features]
 dalek = ["curve25519-dalek", "bulletproofs"]
-zexe = []
+arkworks = []
 class = []
-default = ["zexe"]
+default = ["arkworks"]
 
 [dev-dependencies]
 criterion = "0.3"
@@ -37,37 +39,37 @@ bench = false
 [[bench]]
 name = "root"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "modeq"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "rsa"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "membership_prime"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "nonmembership_prime"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "membership_hash"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "membership_class"
 harness = false
-required-features = ["zexe", "class"]
+required-features = ["arkworks", "class"]
 
 [[bench]]
 name = "membership_bp"
@@ -77,12 +79,12 @@ required-features = ["dalek"]
 [[bench]]
 name = "snark_range"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "membership_prime_60"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "membership_bp_60"
@@ -92,7 +94,7 @@ required-features = ["dalek"]
 [[bench]]
 name = "nonmembership_hash"
 harness = false
-required-features = ["zexe"]
+required-features = ["arkworks"]
 
 [[bench]]
 name = "nonmembership_bp"

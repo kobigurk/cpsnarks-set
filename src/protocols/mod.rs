@@ -4,7 +4,7 @@ use crate::{
     channels::ChannelError, commitments::CommitmentError,
     protocols::hash_to_prime::HashToPrimeError,
 };
-use r1cs_core::SynthesisError;
+use ark_relations::r1cs::SynthesisError;
 use rug::Integer;
 
 pub mod coprime;
@@ -34,12 +34,12 @@ quick_error! {
 #[cfg(feature = "dalek")]
 type R1CSError = bulletproofs::r1cs::R1CSError;
 
-#[cfg(feature = "zexe")]
+#[cfg(feature = "arkworks")]
 quick_error! {
     #[derive(Debug)]
     pub enum DummyBPError {}
 }
-#[cfg(feature = "zexe")]
+#[cfg(feature = "arkworks")]
 type R1CSError = DummyBPError;
 
 quick_error! {

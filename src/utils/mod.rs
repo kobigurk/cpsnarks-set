@@ -95,10 +95,10 @@ pub fn log2(x: usize) -> u32 {
     core::mem::size_of::<usize>() as u32 * 8 - n
 }
 
-#[cfg(all(test, feature = "zexe"))]
+#[cfg(all(test, feature = "arkworks"))]
 mod test {
     use crate::utils::{bigint_to_integer, integer_to_bigint};
-    use algebra::bls12_381::G1Projective;
+    use ark_bls12_381::G1Projective;
     use rug::Integer;
 
     #[test]

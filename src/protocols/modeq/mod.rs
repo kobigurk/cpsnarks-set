@@ -145,7 +145,7 @@ impl<G: ConvertibleUnknownOrderGroup, P: CurvePointProjective> Protocol<G, P> {
     }
 }
 
-#[cfg(all(test, feature = "zexe"))]
+#[cfg(all(test, feature = "arkworks"))]
 mod test {
     use super::{Protocol, Statement, Witness};
     use crate::{
@@ -157,7 +157,7 @@ mod test {
         },
     };
     use accumulator::group::Rsa2048;
-    use algebra::bls12_381::{Bls12_381, G1Projective};
+    use ark_bls12_381::{Bls12_381, G1Projective};
     use merlin::Transcript;
     use rand::thread_rng;
     use rug::rand::RandState;

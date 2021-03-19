@@ -12,10 +12,11 @@ use crate::{
     },
     utils::integer_to_bigint_mod_q,
 };
-use algebra_core::{AffineCurve, PairingEngine, PrimeField, ProjectiveCurve, UniformRand};
-use r1cs_core::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
-use r1cs_std::{
-    alloc::AllocGadget, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpGadget,
+use ark_ff::{PrimeField, UniformRand};
+use ark_ec::{AffineCurve, PairingEngine, ProjectiveCurve};
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use ark_r1cs_std::{
+    alloc::{AllocVar, AllocationMode}, bits::ToBitsGadget, boolean::Boolean, eq::EqGadget, fields::fp::FpVar,
     Assignment,
 };
 use rand::Rng;
@@ -28,23 +29,21 @@ pub struct HashToPrimeCircuit<E: PairingEngine> {
 }
 
 impl<E: PairingEngine> ConstraintSynthesizer<E::Fr> for HashToPrimeCircuit<E> {
-    fn generate_constraints<CS: ConstraintSystem<E::Fr>>(
+    fn generate_constraints(
         self,
-        cs: &mut CS,
+        cs: ConstraintSystemRef<E::Fr>,
     ) -> Result<(), SynthesisError> {
-        let f = FpGadget::alloc_input(cs.ns(|| "alloc value"), || self.value.get())?;
+        let f = FpVar::new_variable(ark_relations::ns!(cs, "alloc value"), || self.value.get(), AllocationMode::Input)?;
         // big-endian bits
-        let bits = f.to_non_unique_bits(cs.ns(|| "to bits"))?;
+        let bits = f.to_non_unique_bits_be()?;
         let modulus_bits = E::Fr::size_in_bits();
         let bits_to_skip = modulus_bits - self.required_bit_size as usize;
-        for (i, b) in bits[..bits_to_skip].iter().enumerate() {
+        for b in bits[..bits_to_skip].iter() {
             b.enforce_equal(
-                cs.ns(|| format!("enforce extra bit {} is zero", i)),
                 &Boolean::constant(false),
             )?;
         }
         bits[bits_to_skip].enforce_equal(
-            cs.ns(|| "enforce highest required bit is zero"),
             &Boolean::constant(true),
         )?;
 
@@ -58,7 +57,7 @@ pub struct Protocol<E: PairingEngine> {
 
 impl<E: PairingEngine> HashToPrimeProtocol<E::G1Projective> for Protocol<E> {
     type Proof = legogro16::Proof<E>;
-    type Parameters = legogro16::Parameters<E>;
+    type Parameters = legogro16::ProvingKey<E>;
 
     fn from_crs(crs: &CRSHashToPrime<E::G1Projective, Self>) -> Protocol<E> {
         Protocol {
@@ -157,10 +156,9 @@ mod test {
         utils::integer_to_bigint_mod_q,
     };
     use accumulator::group::Rsa2048;
-    use algebra::bls12_381::{Bls12_381, Fr, G1Projective};
+    use ark_bls12_381::{Bls12_381, Fr, G1Projective};
     use merlin::Transcript;
-    use r1cs_core::ConstraintSynthesizer;
-    use r1cs_std::test_constraint_system::TestConstraintSystem;
+    use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
     use rand::thread_rng;
     use rug::rand::RandState;
     use rug::Integer;
@@ -168,16 +166,16 @@ mod test {
 
     #[test]
     fn test_circuit() {
-        let mut cs = TestConstraintSystem::<Fr>::new();
+        let cs = ConstraintSystem::<Fr>::new_ref();
         let c = HashToPrimeCircuit::<Bls12_381> {
             required_bit_size: 4,
             value: Some(integer_to_bigint_mod_q::<G1Projective>(&Integer::from(12)).unwrap()),
         };
-        c.generate_constraints(&mut cs).unwrap();
-        println!("num constraints: {}", cs.constraints.len());
-        if !cs.is_satisfied() {
+        c.generate_constraints(cs.clone()).unwrap();
+        println!("num constraints: {}", cs.num_constraints());
+        if !cs.is_satisfied().unwrap() {
             panic!(format!(
-                "not satisfied: {}",
+                "not satisfied: {:?}",
                 cs.which_is_unsatisfied().unwrap()
             ));
         }
